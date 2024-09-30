@@ -13,8 +13,67 @@
               <chat>
                 <internalId value="70864e6e-53d6-4817-90bb-674205b8255d" />
               </chat>
+              <chat>
+                <internalId value="ec94695c-b733-4f6e-a76c-c6a0f49603a4" />
+              </chat>
+              <chat>
+                <internalId value="8f5f8283-007d-472b-81fc-06b05b50775d" />
+                <messages>
+                  <list>
+                    <message>
+                      <speaker value="HUMAN" />
+                      <text value="сколько время ? " />
+                    </message>
+                    <message>
+                      <speaker value="ASSISTANT" />
+                      <text value="&lt;html&gt;&lt;b&gt;You've used up your chat and commands for the month:&lt;/b&gt; You've used all chat messages and commands for the month. Upgrade to Cody Pro for unlimited autocompletes, chats, and commands. &lt;a href=&quot;https://sourcegraph.com/cody/subscription&quot;&gt;Upgrade&lt;/a&gt; or &lt;a href=&quot;https://sourcegraph.com/cody/subscription&quot;&gt;learn more&lt;/a&gt;.&lt;br&gt;&lt;br&gt;(Already upgraded to Pro? Restart your IDE for changes to take effect)&lt;/html&gt;" />
+                    </message>
+                  </list>
+                </messages>
+                <updatedAt value="2024-09-30T02:21:31.8976119" />
+              </chat>
+              <chat>
+                <internalId value="d5a132ec-0c76-4636-8b28-a2bae68899b3" />
+              </chat>
+              <chat>
+                <internalId value="f930e0a1-a232-41f1-b590-d9e9aee0ab2f" />
+                <messages>
+                  <list>
+                    <message>
+                      <speaker value="HUMAN" />
+                      <text value="привет" />
+                    </message>
+                    <message>
+                      <speaker value="ASSISTANT" />
+                      <text value="&lt;html&gt;&lt;b&gt;You've used up your chat and commands for the month:&lt;/b&gt; You've used all chat messages and commands for the month. Upgrade to Cody Pro for unlimited autocompletes, chats, and commands. &lt;a href=&quot;https://sourcegraph.com/cody/subscription&quot;&gt;Upgrade&lt;/a&gt; or &lt;a href=&quot;https://sourcegraph.com/cody/subscription&quot;&gt;learn more&lt;/a&gt;.&lt;br&gt;&lt;br&gt;(Already upgraded to Pro? Restart your IDE for changes to take effect)&lt;/html&gt;" />
+                    </message>
+                  </list>
+                </messages>
+                <updatedAt value="2024-09-30T02:29:21.3054427" />
+              </chat>
             </list>
           </chats>
+          <defaultLlm>
+            <llm>
+              <model value="anthropic/claude-3-5-sonnet-20240620" />
+              <provider value="Anthropic" />
+              <tags>
+                <list>
+                  <option value="gateway" />
+                  <option value="power" />
+                  <option value="recommended" />
+                  <option value="free" />
+                </list>
+              </tags>
+              <title value="Claude 3.5 Sonnet" />
+              <usage>
+                <list>
+                  <option value="chat" />
+                  <option value="edit" />
+                </list>
+              </usage>
+            </llm>
+          </defaultLlm>
         </AccountData>
       </list>
     </accountData>

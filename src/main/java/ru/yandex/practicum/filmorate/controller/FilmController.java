@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
+import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,28 +15,33 @@ import java.util.Map;
 @RestController
 @RequestMapping("/films")
 public class FilmController {
-    private final Map<Long, Film> films = new HashMap<>();
     private static final LocalDate CINEMA_BIRTHDAY = LocalDate.of(1895, 12, 28);
+    protected long generatorId = 0;
+    private final Map<Long, Film> films = new HashMap<>();
 
     @GetMapping
     public Collection<Film> findAll() {
-        log.info("Получен запрос на получение всех фильмов");
+        log.info("Пришел GET запрос /films");
+        Collection<Film> response = films.values();
+        log.info("Отправлен ответ GET /films с телом: {}", response);
         return films.values();
     }
 
     @PostMapping
     public Film create(@RequestBody Film newFilm) {
-        log.info("Получен запрос на создание фильма: {}", newFilm);
+        log.info("Пришел POST запрос /films с телом: {}", newFilm);
         validateFilm(newFilm);
-        newFilm.setId(getNextId());
+        long id = generatorId++;
+        newFilm.setId(id);
         films.put(newFilm.getId(), newFilm);
         log.info("Добавлен фильм с идентификатором {}", newFilm.getId());
+        log.info("Отправлен ответ POST /films с телом: {}", newFilm);
         return newFilm;
     }
 
     @PutMapping
-    public Film update(@RequestBody Film newFilm) {
-        log.info("Получен запрос на обновление фильма: {}", newFilm);
+    public Film update(@Valid @RequestBody Film newFilm) {
+        log.info("Пришел PUT запрос /films с телом: {}", newFilm);
         if (!films.containsKey(newFilm.getId())) {
             log.warn("Фильм с идентификатором {} не найден", newFilm.getId());
             throw new ValidationException("Фильм не найден");
@@ -43,11 +49,12 @@ public class FilmController {
         validateFilm(newFilm);
         films.put(newFilm.getId(), newFilm);
         log.info("Фильм с идентификатором {} обновлен.", newFilm.getId());
+        log.info("Отправлен ответ PUT /films с телом: {}", newFilm);
         return newFilm;
     }
 
-    private void validateFilm(Film film) {
-        if (film.getName() == null || film.getName().isBlank()) {
+    private void validateFilm(@Valid Film film) {
+        if (film.getName().isBlank()) {
             log.error("Ошибка валидации: название фильма не может быть пустым");
             throw new ValidationException("Название фильма не может быть пустым");
         }
@@ -63,14 +70,5 @@ public class FilmController {
             log.error("Ошибка валидации: продолжительность фильма должна быть положительной.");
             throw new ValidationException("Продолжительность фильма должна быть положительной.");
         }
-    }
-
-    private long getNextId() {
-        long currentMaxId = films.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
     }
 }

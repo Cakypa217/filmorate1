@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
+import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,27 +15,32 @@ import java.util.Map;
 @RestController
 @RequestMapping("/users")
 public class UserController {
+    protected long generatorId = 0;
     private final Map<Long, User> users = new HashMap<>();
 
     @GetMapping
     public Collection<User> findAll() {
-        log.info("Получен запрос на получение всех пользователей");
+        log.info("Пришел GET запрос /users");
+        Collection<User> response = users.values();
+        log.info("Отправлен ответ GET /users с телом: {}", response);
         return users.values();
     }
 
     @PostMapping
     public User create(@RequestBody User user) {
-        log.info("Получен запрос на создание пользователя: {}", user);
+        log.info("Пришел POST запрос /users с телом: {}", user);
         validateUser(user);
-        user.setId(getNextId());
+        long id = generatorId++;
+        user.setId(id);
         users.put(user.getId(), user);
         log.info("Добавлен пользователь с идентификатором {}", user.getId());
+        log.info("Отправлен ответ POST /users с телом: {}", user);
         return user;
     }
 
     @PutMapping
-    public User update(@RequestBody User newUser) {
-        log.info("Получен запрос на обновление пользователя: {}", newUser);
+    public User update(@Valid @RequestBody User newUser) {
+        log.info("Пришел PUT запрос /users с телом: {}", newUser);
         validateUser(newUser);
         if (!users.containsKey(newUser.getId())) {
             log.warn("Пользователь с идентификатором {} не найден", newUser.getId());
@@ -42,15 +48,16 @@ public class UserController {
         }
         users.put(newUser.getId(), newUser);
         log.info("Пользователь с идентификатором {} обновлен.", newUser.getId());
+        log.info("Отправлен ответ PUT /users с телом: {}", newUser);
         return newUser;
     }
 
-    private void validateUser(User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
+    private void validateUser(@Valid User user) {
+        if (!user.getEmail().contains("@")) {
             log.error("Ошибка валидации: email не может быть пустым или не содержать символа '@'");
             throw new ValidationException("Email не может быть пустым или не содержать символа '@'");
         }
-        if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
+        if (user.getLogin().contains(" ")) {
             log.error("Ошибка валидации: логин не может быть пустым или содержать пробелы");
             throw new ValidationException("Логин не может быть пустым или содержать пробелы");
         }
@@ -62,14 +69,5 @@ public class UserController {
             log.error("Ошибка валидации: дата рождения не может быть в будущем");
             throw new ValidationException("Дата рождения не может быть в будущем");
         }
-    }
-
-    private long getNextId() {
-        long currentMaxId = users.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
     }
 }
