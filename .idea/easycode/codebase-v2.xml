@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="com.obiscr.chatgpt.settings.EasyCodeState">
+    <option name="projectFiles" value="$PROJECT_DIR$/src/main/java/ru/yandex/practicum/filmorate/controller/FilmController.java;C:/Users/Sakura/Desktop/Java project/Hard/src/main/java/ru/yandex/practicum/filmorate/controller/UserController.java;C:/Users/Sakura/Desktop/Java project/Hard/src/main/java/ru/yandex/practicum/filmorate/exception/ValidationException.java;C:/Users/Sakura/Desktop/Java project/Hard/src/main/java/ru/yandex/practicum/filmorate/model/Film.java;C:/Users/Sakura/Desktop/Java project/Hard/src/main/java/ru/yandex/practicum/filmorate/model/User.java;C:/Users/Sakura/Desktop/Java project/Hard/src/main/java/ru/yandex/practicum/filmorate/FilmorateApplication.java;C:/Users/Sakura/Desktop/Java project/Hard/src/test/java/ru/yandex/practicum/filmorate/FilmControllerTest.java;C:/Users/Sakura/Desktop/Java project/Hard/src/test/java/ru/yandex/practicum/filmorate/FilmorateApplicationTests.java;C:/Users/Sakura/Desktop/Java project/Hard/src/test/java/ru/yandex/practicum/filmorate/UserControllerTest.java;C:/Users/Sakura/Desktop/Java project/Hard/pom.xml" />
+  </component>
+</project>

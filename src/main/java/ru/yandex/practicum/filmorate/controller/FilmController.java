@@ -34,7 +34,6 @@ public class FilmController {
         long id = generatorId++;
         newFilm.setId(id);
         films.put(newFilm.getId(), newFilm);
-        log.info("Добавлен фильм с идентификатором {}", newFilm.getId());
         log.info("Отправлен ответ POST /films с телом: {}", newFilm);
         return newFilm;
     }
@@ -48,7 +47,6 @@ public class FilmController {
         }
         validateFilm(newFilm);
         films.put(newFilm.getId(), newFilm);
-        log.info("Фильм с идентификатором {} обновлен.", newFilm.getId());
         log.info("Отправлен ответ PUT /films с телом: {}", newFilm);
         return newFilm;
     }
