@@ -1,74 +1,82 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
-
-import javax.validation.Valid;
-import java.time.LocalDate;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import lombok.extern.slf4j.Slf4j;
+
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 @Slf4j
 @RestController
 @RequestMapping("/films")
 public class FilmController {
-    private static final LocalDate CINEMA_BIRTHDAY = LocalDate.of(1895, 12, 28);
-    protected long generatorId = 0;
-    private final Map<Long, Film> films = new HashMap<>();
+    private final FilmService filmService;
+    private final UserService userService;
+
+    @Autowired
+    public FilmController(FilmService filmService, UserService userService) {
+        this.filmService = filmService;
+        this.userService = userService;
+    }
 
     @GetMapping
     public Collection<Film> findAll() {
-        log.info("Пришел GET запрос /films");
-        Collection<Film> response = films.values();
-        log.info("Отправлен ответ GET /films с телом: {}", response);
-        return films.values();
+        log.info("Получен запрос GET /films");
+        return filmService.getAllFilms();
     }
 
     @PostMapping
-    public Film create(@RequestBody Film newFilm) {
-        log.info("Пришел POST запрос /films с телом: {}", newFilm);
-        validateFilm(newFilm);
-        long id = generatorId++;
-        newFilm.setId(id);
-        films.put(newFilm.getId(), newFilm);
-        log.info("Добавлен фильм с идентификатором {}", newFilm.getId());
-        log.info("Отправлен ответ POST /films с телом: {}", newFilm);
-        return newFilm;
+    public Film create(@RequestBody Film film) {
+        filmService.validateFilm(film);
+        log.info("Получен запрос POST /films с телом: {}", film);
+        return filmService.addFilm(film);
     }
 
     @PutMapping
-    public Film update(@Valid @RequestBody Film newFilm) {
-        log.info("Пришел PUT запрос /films с телом: {}", newFilm);
-        if (!films.containsKey(newFilm.getId())) {
-            log.warn("Фильм с идентификатором {} не найден", newFilm.getId());
-            throw new ValidationException("Фильм не найден");
+    public Film update(@RequestBody Film film) {
+        filmService.validateFilm(film);
+        Long filmId = film.getId();
+        Film existingFilm = filmService.getFilmById(filmId);
+        if (existingFilm == null) {
+            log.warn("Фильм с идентификатором {} не найден", filmId);
+            throw new NotFoundException("Фильм не найден");
         }
-        validateFilm(newFilm);
-        films.put(newFilm.getId(), newFilm);
-        log.info("Фильм с идентификатором {} обновлен.", newFilm.getId());
-        log.info("Отправлен ответ PUT /films с телом: {}", newFilm);
-        return newFilm;
+        filmService.getFilmById(filmId);
+        log.info("Получен запрос PUT /films с телом: {}", film);
+        return filmService.updateFilm(film);
     }
 
-    private void validateFilm(@Valid Film film) {
-        if (film.getName().isBlank()) {
-            log.error("Ошибка валидации: название фильма не может быть пустым");
-            throw new ValidationException("Название фильма не может быть пустым");
+    @GetMapping("/{id}")
+    public Film getFilmById(@PathVariable Long id) {
+        log.info("Получен запрос GET /films/{}", id);
+        return filmService.getFilmById(id);
+    }
+
+    @PutMapping("/{id}/like/{userId}")
+    public void addLike(@PathVariable Long id, @PathVariable Long userId) {
+        log.info("Получен запрос PUT /films/{}/like/{}", id, userId);
+        filmService.addLike(id, userId);
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    public void removeLike(@PathVariable Long id, @PathVariable Long userId) {
+        log.info("Получен запрос DELETE /films/{}/like/{}", id, userId);
+        if (userService.getUserById(userId) == null) {
+            throw new NotFoundException("Пользователь с id " + userId + " не найден");
         }
-        if (film.getDescription().length() > 200) {
-            log.error("Ошибка валидации: описание фильма не может превышать 200 символов.");
-            throw new ValidationException("Описание фильма не может превышать 200 символов.");
-        }
-        if (film.getReleaseDate().isBefore(CINEMA_BIRTHDAY)) {
-            log.error("Ошибка валидации: дата выпуска фильма не может быть ранее 28 декабря 1895 г.");
-            throw new ValidationException("Дата выпуска не может быть ранее 28 декабря 1895 г.");
-        }
-        if (film.getDuration().getSeconds() <= 0) {
-            log.error("Ошибка валидации: продолжительность фильма должна быть положительной.");
-            throw new ValidationException("Продолжительность фильма должна быть положительной.");
-        }
+        filmService.removeLike(id, userId);
+    }
+
+    @GetMapping("/popular")
+    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10") int count) {
+        log.info("Получен запрос GET /films/popular?count={}", count);
+        return filmService.getPopularFilms(count);
     }
 }
