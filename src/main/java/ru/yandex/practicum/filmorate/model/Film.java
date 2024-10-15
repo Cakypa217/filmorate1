@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.constraints.NotBlank;
 
 import lombok.Data;
@@ -18,6 +19,7 @@ public class Film {
     private String description;
     private LocalDate releaseDate;
     private int duration;
+    @JsonIgnore
     private Set<Long> likes = new HashSet<>();
 
     public Film(String name, String description, LocalDate releaseDate, int duration) {

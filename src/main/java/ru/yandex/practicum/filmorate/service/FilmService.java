@@ -29,10 +29,18 @@ public class FilmService {
     }
 
     public Film addFilm(Film film) {
+        validateFilm(film);
         return filmStorage.add(film);
     }
 
     public Film updateFilm(Film film) {
+        validateFilm(film);
+        Long filmId = film.getId();
+        Film existingFilm = getFilmById(filmId);
+        if (existingFilm == null) {
+            log.warn("Фильм с идентификатором {} не найден", filmId);
+            throw new NotFoundException("Фильм не найден");
+        }
         return filmStorage.update(film);
     }
 
@@ -63,6 +71,10 @@ public class FilmService {
     }
 
     public void removeLike(Long filmId, Long userId) {
+        if (userService.getUserById(userId) == null) {
+            log.warn("Пользователь с id {} не найден", userId);
+            throw new NotFoundException("Пользователь с id " + userId + " не найден");
+        }
         Film film = getFilmById(filmId);
         film.getLikes().remove(userId);
     }

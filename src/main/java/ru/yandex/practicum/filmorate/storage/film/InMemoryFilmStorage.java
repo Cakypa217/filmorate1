@@ -12,11 +12,11 @@ import ru.yandex.practicum.filmorate.model.Film;
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
     private final Map<Long, Film> films = new HashMap<>();
-    private long generatorId = 1;
+    private long generatorId = 0;
 
     @Override
     public Film add(Film film) {
-        film.setId(generatorId++);
+        film.setId(++generatorId);
         films.put(film.getId(), film);
         return film;
     }

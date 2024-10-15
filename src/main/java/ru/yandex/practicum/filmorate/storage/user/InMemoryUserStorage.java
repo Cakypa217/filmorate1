@@ -12,11 +12,11 @@ import ru.yandex.practicum.filmorate.model.User;
 @Component
 public class InMemoryUserStorage implements UserStorage {
     private final Map<Long, User> users = new HashMap<>();
-    private long generatorId = 1;
+    private long generatorId = 0;
 
     @Override
     public User add(User user) {
-        user.setId(generatorId++);
+        user.setId(++generatorId);
         users.put(user.getId(), user);
         return user;
     }

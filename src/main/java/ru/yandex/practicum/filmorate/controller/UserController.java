@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import java.util.Collection;
 import java.util.List;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,57 +27,62 @@ public class UserController {
     @GetMapping
     public Collection<User> findAll() {
         log.info("Получен запрос GET /users");
-        return userService.getAllUsers();
+        Collection<User> users = userService.getAllUsers();
+        log.info("Отправлен ответ GET /users с количеством пользователей: {}", users.size());
+        return users;
     }
 
     @PostMapping
-    public User create(@RequestBody User user) {
-        userService.validateUser(user);
+    public User create(@Valid @RequestBody User user) {
         log.info("Получен запрос POST /users с телом: {}", user);
-        return userService.addUser(user);
+        User createdUser = userService.addUser(user);
+        log.info("Отправлен ответ POST /users с телом: {}", createdUser);
+        return createdUser;
     }
 
     @PutMapping
-    public User update(@RequestBody User user) {
-        userService.validateUser(user);
-        Long userId = user.getId();
-        User existingUser = userService.getUserById(userId);
-        if (existingUser == null) {
-            log.warn("Пользователь с идентификатором {} не найден", userId);
-            throw new NotFoundException("Пользователь не найден");
-        }
-        userService.getUserById(userId);
+    public User update(@Valid @RequestBody User user) {
         log.info("Получен запрос PUT /users с телом: {}", user);
-        return userService.updateUser(user);
+        User updatedUser = userService.updateUser(user);
+        log.info("Отправлен ответ PUT /users с телом: {}", updatedUser);
+        return updatedUser;
     }
 
     @GetMapping("/{id}")
     public User getUserById(@PathVariable Long id) {
         log.info("Получен запрос GET /users/{}", id);
-        return userService.getUserById(id);
+        User user = userService.getUserById(id);
+        log.info("Отправлен ответ GET /users/{} с телом: {}", id, user);
+        return user;
     }
 
     @PutMapping("/{id}/friends/{friendId}")
     public void addFriend(@PathVariable Long id, @PathVariable Long friendId) {
         log.info("Получен запрос PUT /users/{}/friends/{}", id, friendId);
         userService.addFriend(id, friendId);
+        log.info("Пользователь с id {} добавлен в друзья пользователю с id {}", friendId, id);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
     public void removeFriend(@PathVariable Long id, @PathVariable Long friendId) {
         log.info("Получен запрос DELETE /users/{}/friends/{}", id, friendId);
         userService.removeFriend(id, friendId);
+        log.info("Пользователь с id {} удален из друзей пользователя с id {}", friendId, id);
     }
 
     @GetMapping("/{id}/friends")
     public List<User> getFriends(@PathVariable Long id) {
         log.info("Получен запрос GET /users/{}/friends", id);
-        return userService.getFriends(id);
+        List<User> friends = userService.getFriends(id);
+        log.info("Отправлен ответ GET /users/{}/friends с количеством друзей: {}", id, friends.size());
+        return friends;
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
     public List<User> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
         log.info("Получен запрос GET /users/{}/friends/common/{}", id, otherId);
-        return userService.getCommonFriends(id, otherId);
+        List<User> commonFriends = userService.getCommonFriends(id, otherId);
+        log.info("Отправлен ответ GET /users/{}/friends/common/{} с количеством общих друзей: {}", id, otherId, commonFriends.size());
+        return commonFriends;
     }
 }

@@ -25,10 +25,18 @@ public class UserService {
     }
 
     public User addUser(User user) {
+        validateUser(user);
         return userStorage.add(user);
     }
 
     public User updateUser(User user) {
+        validateUser(user);
+        Long userId = user.getId();
+        User existingUser = getUserById(userId);
+        if (existingUser == null) {
+            log.warn("Пользователь с идентификатором {} не найден", userId);
+            throw new NotFoundException("Пользователь не найден");
+        }
         return userStorage.update(user);
     }
 
