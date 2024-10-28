@@ -25,13 +25,14 @@ SELECT f.*, COUNT(l.user_id) AS likes_count
 
 FROM films f
 
-LEFT JOIN likes l ON f.id = l.film_id
+LEFT JOIN likes l ON f.film_id = l.film_id
 
-GROUP BY f.id
+GROUP BY f.film_id
 
 ORDER BY likes_count DESC
 
 LIMIT N;
+
 
 
 Получение списка общих друзей с другим пользователем
@@ -40,9 +41,9 @@ SELECT u.*
 
 FROM users u
 
-JOIN friendships f1 ON u.id = f1.friend_id
+JOIN friendships f1 ON u.user_id = f1.friend_id
 
-JOIN friendships f2 ON u.id = f2.friend_id
+JOIN friendships f2 ON u.user_id = f2.friend_id
 
 WHERE f1.user_id = :user_id1 AND f2.user_id = :user_id2
 
