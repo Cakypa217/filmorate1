@@ -18,9 +18,16 @@ public class ErrorHandler {
         return new ErrorResponse(e.getMessage());
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFoundException(NotFoundException e) {
+        log.warn("Запрошенный ресурс не найден: {}", e.getMessage());
+        return new ErrorResponse(e.getMessage());
+    }
+
+    @ExceptionHandler(MpaNotFoundException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse mpaHandleNotFoundException(MpaNotFoundException e) {
         log.warn("Запрошенный ресурс не найден: {}", e.getMessage());
         return new ErrorResponse(e.getMessage());
     }

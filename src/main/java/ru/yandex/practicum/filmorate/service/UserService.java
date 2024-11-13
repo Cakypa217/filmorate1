@@ -1,102 +1,105 @@
 package ru.yandex.practicum.filmorate.service;
 
-import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import lombok.extern.slf4j.Slf4j;
-
+import ru.yandex.practicum.filmorate.dal.UserRepository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Slf4j
 @Service
 public class UserService {
-    private final UserStorage userStorage;
+    private final UserRepository userRepository;
 
     @Autowired
-    public UserService(UserStorage userStorage) {
-        this.userStorage = userStorage;
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
-    public User addUser(User user) {
+    public User createUser(User user) {
         validateUser(user);
-        return userStorage.add(user);
+        User createdUser = userRepository.create(user);
+        log.info("Добавлен новый пользователь: {}", createdUser);
+        return createdUser;
     }
 
     public User updateUser(User user) {
+        log.info("Получен запрос на обновление пользователя: {}", user);
         validateUser(user);
-        Long userId = user.getId();
-        User existingUser = getUserById(userId);
-        if (existingUser == null) {
-            log.warn("Пользователь с идентификатором {} не найден", userId);
-            throw new NotFoundException("Пользователь не найден");
-        }
-        return userStorage.update(user);
+        getUserById(user.getId());
+        userRepository.update(user);
+        User updatedUser = getUserById(user.getId());
+        log.info("Обновлен пользователь: {}", updatedUser);
+        return updatedUser;
     }
 
     public List<User> getAllUsers() {
-        return userStorage.getAll();
+        log.info("Получен запрос на получение всех пользователей");
+        List<User> users = userRepository.findAll();
+        log.info("Получен список всех пользователей. Количество: {}", users.size());
+        return users;
     }
 
     public User getUserById(Long id) {
-        User user = userStorage.getById(id);
-        if (user == null) {
-            throw new NotFoundException("Пользователь с идентификатором " + id + " не найден");
-        }
-        return user;
+        log.info("Получен запрос на получение пользователя с id: {}", id);
+        log.info("Отправлен ответ с userRepository.findById(id): {}", userRepository.findById(id));
+        return userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id " + id + " не найден"));
     }
 
     public void addFriend(Long userId, Long friendId) {
-        User user = getUserById(userId);
-        User friend = getUserById(friendId);
-        user.getFriends().add(friendId);
-        friend.getFriends().add(userId);
+        log.info("Получен запрос на добавление пользователя {} в друзья пользователя {}", userId, friendId);
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
+        userRepository.findById(friendId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id " + friendId + " не найден"));
+        userRepository.addFriend(userId, friendId);
+        log.info("Пользователь {} добавил в друзья пользователя {}", userId, friendId);
     }
 
     public void removeFriend(Long userId, Long friendId) {
-        User user = getUserById(userId);
-        User friend = getUserById(friendId);
-        user.getFriends().remove(friendId);
-        friend.getFriends().remove(userId);
+        log.info("Получен запрос на удаление пользователя {} из друзей пользователя {}", userId, friendId);
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
+        userRepository.findById(friendId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id " + friendId + " не найден"));
+        userRepository.deleteFriend(userId, friendId);
+        log.info("Пользователь {} удалил из друзей пользователя {}", userId, friendId);
     }
 
     public List<User> getFriends(Long userId) {
-        User user = getUserById(userId);
-        return user.getFriends().stream()
-                .map(this::getUserById)
-                .collect(Collectors.toList());
+        log.info("Получен запрос на получение списка друзей пользователя {}", userId);
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
+        List<User> friends = userRepository.getFriends(userId);
+        log.info("Получен список друзей пользователя {}. Количество: {}", userId, friends.size());
+        return friends;
     }
 
     public List<User> getCommonFriends(Long userId, Long otherUserId) {
-        Set<Long> userFriends = new HashSet<>(getUserById(userId).getFriends());
-        Set<Long> otherUserFriends = new HashSet<>(getUserById(otherUserId).getFriends());
-        userFriends.retainAll(otherUserFriends);
-        return userFriends.stream()
-                .map(this::getUserById)
-                .collect(Collectors.toList());
+        log.info("Получен запрос на получение списка общих друзей пользователей {} и {}", userId, otherUserId);
+        List<User> commonFriends = userRepository.getCommonFriends(userId, otherUserId);
+        log.info("Получен список общих друзей пользователей {} и {}. Количество: {}",
+                userId, otherUserId, commonFriends.size());
+        return commonFriends;
     }
 
-    public void validateUser(User user) {
-        if (!user.getEmail().contains("@")) {
-            log.error("Ошибка валидации: email не может быть пустым или не содержать символа '@'");
-            throw new ValidationException("Email не может быть пустым или не содержать символа '@'");
+    private void validateUser(User user) {
+        if (user.getEmail().isBlank() || !user.getEmail().contains("@")) {
+            throw new ValidationException("Электронная почта не может быть пустой и должна содержать символ @");
         }
-        if (user.getLogin().contains(" ")) {
-            log.error("Ошибка валидации: логин не может быть пустым или содержать пробелы");
-            throw new ValidationException("Логин не может быть пустым или содержать пробелы");
+        if (user.getLogin().isBlank() || user.getLogin().contains(" ")) {
+            throw new ValidationException("Логин не может быть пустым и содержать пробелы");
         }
-        if (user.getName().isBlank()) {
-            log.info("Ошибка валидации: некорректный логин: {}", user.getLogin());
+        if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
         if (user.getBirthday().isAfter(LocalDate.now())) {
-            log.error("Ошибка валидации: дата рождения не может быть в будущем");
             throw new ValidationException("Дата рождения не может быть в будущем");
         }
     }

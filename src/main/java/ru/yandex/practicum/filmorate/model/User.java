@@ -1,17 +1,23 @@
 package ru.yandex.practicum.filmorate.model;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @NonNull
     @NotBlank
@@ -21,21 +27,11 @@ public class User {
     private String login;
     private String name;
     private LocalDate birthday;
-    @JsonIgnore
-    private Set<Long> friends = new HashSet<>();
 
     public User(String name, String email, String login, LocalDate birthday) {
         this.name = name;
         this.email = email;
         this.login = login;
         this.birthday = birthday;
-    }
-
-    public void addFriend(Long friendId) {
-        friends.add(friendId);
-    }
-
-    public void removeFriend(Long friendId) {
-        friends.remove(friendId);
     }
 }
