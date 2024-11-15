@@ -36,6 +36,14 @@ public class BaseRepository<T> {
         return rowsDeleted > 0;
     }
 
+
+    protected void update(String query, Object... params) {
+        int rowsUpdated = jdbc.update(query, params);
+        if (rowsUpdated == 0) {
+            throw new NotFoundException("Не удалось обновить данные");
+        }
+    }
+
     protected long insert(String query, Object... params) {
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
         jdbc.update(connection -> {
@@ -46,19 +54,11 @@ public class BaseRepository<T> {
             }
             return ps;
         }, keyHolder);
-
         Number key = keyHolder.getKey();
         if (key != null) {
             return key.longValue();
         } else {
             throw new NotFoundException("Не удалось сохранить данные");
-        }
-    }
-
-    protected void update(String query, Object... params) {
-        int rowsUpdated = jdbc.update(query, params);
-        if (rowsUpdated == 0) {
-            throw new NotFoundException("Не удалось обновить данные");
         }
     }
 }

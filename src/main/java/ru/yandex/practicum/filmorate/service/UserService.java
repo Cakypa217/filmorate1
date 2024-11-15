@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dal.FriendsRepository;
 import ru.yandex.practicum.filmorate.dal.UserRepository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
@@ -15,10 +16,12 @@ import java.util.List;
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final FriendsRepository friendsRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, FriendsRepository friendsRepository) {
         this.userRepository = userRepository;
+        this.friendsRepository = friendsRepository;
     }
 
     public User createUser(User user) {
@@ -29,7 +32,6 @@ public class UserService {
     }
 
     public User updateUser(User user) {
-        log.info("Получен запрос на обновление пользователя: {}", user);
         validateUser(user);
         getUserById(user.getId());
         userRepository.update(user);
@@ -39,51 +41,44 @@ public class UserService {
     }
 
     public List<User> getAllUsers() {
-        log.info("Получен запрос на получение всех пользователей");
         List<User> users = userRepository.findAll();
         log.info("Получен список всех пользователей. Количество: {}", users.size());
         return users;
     }
 
     public User getUserById(Long id) {
-        log.info("Получен запрос на получение пользователя с id: {}", id);
-        log.info("Отправлен ответ с userRepository.findById(id): {}", userRepository.findById(id));
         return userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + id + " не найден"));
     }
 
     public void addFriend(Long userId, Long friendId) {
-        log.info("Получен запрос на добавление пользователя {} в друзья пользователя {}", userId, friendId);
         userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
         userRepository.findById(friendId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + friendId + " не найден"));
-        userRepository.addFriend(userId, friendId);
+        friendsRepository.addFriend(userId, friendId);
         log.info("Пользователь {} добавил в друзья пользователя {}", userId, friendId);
     }
 
     public void removeFriend(Long userId, Long friendId) {
-        log.info("Получен запрос на удаление пользователя {} из друзей пользователя {}", userId, friendId);
         userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
         userRepository.findById(friendId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + friendId + " не найден"));
-        userRepository.deleteFriend(userId, friendId);
+        friendsRepository.deleteFriend(userId, friendId);
         log.info("Пользователь {} удалил из друзей пользователя {}", userId, friendId);
     }
 
     public List<User> getFriends(Long userId) {
-        log.info("Получен запрос на получение списка друзей пользователя {}", userId);
         userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
-        List<User> friends = userRepository.getFriends(userId);
+        List<User> friends = friendsRepository.getFriends(userId);
         log.info("Получен список друзей пользователя {}. Количество: {}", userId, friends.size());
         return friends;
     }
 
     public List<User> getCommonFriends(Long userId, Long otherUserId) {
-        log.info("Получен запрос на получение списка общих друзей пользователей {} и {}", userId, otherUserId);
-        List<User> commonFriends = userRepository.getCommonFriends(userId, otherUserId);
+        List<User> commonFriends = friendsRepository.getCommonFriends(userId, otherUserId);
         log.info("Получен список общих друзей пользователей {} и {}. Количество: {}",
                 userId, otherUserId, commonFriends.size());
         return commonFriends;

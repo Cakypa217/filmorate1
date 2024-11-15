@@ -3,10 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dal.FilmRepository;
-import ru.yandex.practicum.filmorate.dal.GenreRepository;
-import ru.yandex.practicum.filmorate.dal.MpaRepository;
-import ru.yandex.practicum.filmorate.dal.UserRepository;
+import ru.yandex.practicum.filmorate.dal.*;
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
 import ru.yandex.practicum.filmorate.exception.MpaNotFoundException;
@@ -16,9 +13,9 @@ import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.dto.GenreDto;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,19 +27,22 @@ public class FilmService {
     private final GenreRepository genreRepository;
     private final MpaRepository mpaRepository;
     private final UserRepository userRepository;
+    private final LikeRepository likeRepository;
 
     @Autowired
     public FilmService(FilmRepository filmRepository, GenreRepository genreRepository,
-                       MpaRepository mpaRepository, UserRepository userRepository) {
+                       MpaRepository mpaRepository, UserRepository userRepository
+            , LikeRepository likeRepository) {
         this.filmRepository = filmRepository;
         this.genreRepository = genreRepository;
         this.mpaRepository = mpaRepository;
         this.userRepository = userRepository;
+        this.likeRepository = likeRepository;
     }
 
     public FilmDto createFilm(NewFilmRequest newFilmRequest) {
-        log.info("Получен запрос createFilm с newFilmRequest: {}", newFilmRequest);
-        Mpa mpa = mpaRepository.getMpaById(newFilmRequest.getMpa().getId());
+        Mpa mpa = mpaRepository.getMpaById(newFilmRequest.getMpa().getId(),
+                () -> new MpaNotFoundException("MPA с id " + newFilmRequest.getMpa().getId() + " не найден"));
         List<Genre> genres = newFilmRequest.getGenres().stream()
                 .map(genreDto -> genreRepository.getGenreById(genreDto.getId())
                         .orElseThrow(() -> new MpaNotFoundException("Жанр с id " + genreDto.getId() + " не найден")))
@@ -54,66 +54,62 @@ public class FilmService {
         return FilmMapper.mapToFilmDto(film);
     }
 
+
     public List<Film> getAllFilms() {
-        log.info("Получен запрос на получение всех фильмов");
-        log.info("Найдены фильмы: {}", filmRepository.findAll());
-        return filmRepository.findAll();
+        final List<Film> films = filmRepository.findAll();
+        genreRepository.load(films);
+        films.forEach(film -> {
+            Mpa mpa = mpaRepository.getMpaById(film.getMpa().getId(),
+                    () -> new MpaNotFoundException("MPA с id " + film.getMpa().getId() + " не найден"));
+            film.setMpa(mpa);
+        });
+        log.info("Найдены фильмы: {}", films);
+        return films;
     }
 
 
-    public FilmDto getFilmById(Long filmId) {
-        log.info("Получен запрос на получение фильма с id: {}", filmId);
-        Film film = filmRepository.findById(filmId)
+    public FilmDto getFilmById(Long id) {
+        Film film = filmRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Фильм не найден"));
-        Long mpaId = mpaRepository.getMpaForFilm(filmId);
-        Mpa mpa = mpaRepository.getMpaById(mpaId);
+        Mpa mpa = mpaRepository.getMpaById(film.getMpa().getId(),
+                () -> new MpaNotFoundException("MPA с id " + film.getMpa().getId() + " не найден"));
         film.setMpa(mpa);
-        film.setMpa(mpa);
-        List<Genre> genres = genreRepository.getGenresForFilm(filmId);
-        film.setGenres(genres);
+        genreRepository.load(Collections.singletonList(film));
         log.info("Отправлен ответ с FilmMapper.mapToFilmDto(film): {}", FilmMapper.mapToFilmDto(film));
         return FilmMapper.mapToFilmDto(film);
     }
 
 
-    public FilmDto updateFilm(NewFilmRequest newFilmRequest) {
-        log.info("Получен запрос на обновление фильма newFilmRequest: {}", newFilmRequest);
+    public NewFilmRequest update(NewFilmRequest newFilmRequest) {
         Film film = filmRepository.findById(newFilmRequest.getId())
                 .orElseThrow(() -> new NotFoundException("Фильм не найден"));
-
-        Mpa mpa = mpaRepository.getMpaById(newFilmRequest.getMpa().getId());
-        mpaRepository.update(film.getId(), mpa.getId());
-
-        List<Long> genreIds = newFilmRequest.getGenres().stream()
-                .map(GenreDto::getId)
-                .collect(Collectors.toList());
-        genreRepository.update(film.getId(), genreIds);
-
-        List<Genre> genres = genreRepository.getGenresForFilm(film.getId());
-        Film updatedFilm = FilmMapper.updateFilm(film, newFilmRequest, mpa, genres);
-        filmRepository.update(updatedFilm);
-        log.info("Отправлен ответ с FilmMapper.mapToFilmDto(updatedFilm): {}", FilmMapper.mapToFilmDto(updatedFilm));
-        return FilmMapper.mapToFilmDto(updatedFilm);
+        film.setRate(newFilmRequest.getRate());
+        filmRepository.update(newFilmRequest);
+        log.info("Отправлен ответ : {}", newFilmRequest);
+        return newFilmRequest;
     }
 
     public List<Film> getPopularFilms(int count) {
-        log.info("Получен запрос на получение списка популярных фильмов. Количество: {}", count);
         List<Film> popularFilms = filmRepository.getPopularFilms(count);
+        genreRepository.load(popularFilms);
+        popularFilms.forEach(film -> {
+            Mpa mpa = mpaRepository.getMpaById(film.getMpa().getId(),
+                    () -> new MpaNotFoundException("MPA с id " + film.getMpa().getId() + " не найден"));
+            film.setMpa(mpa);
+        });
         log.info("Получен список популярных фильмов. Количество: {}", popularFilms.size());
         return popularFilms;
     }
 
     public void addLike(Long filmId, Long userId) {
-        log.info("Получен запрос на добавление лайка фильму {} от пользователя {}", filmId, userId);
         checkFilmAndUserExist(filmId, userId);
-        filmRepository.addLike(filmId, userId);
+        likeRepository.addLike(filmId, userId);
         log.info("Пользователь {} поставил лайк фильму {}", userId, filmId);
     }
 
     public void removeLike(Long filmId, Long userId) {
-        log.info("Получен запрос на удаление лайка у фильма {} от пользователя {}", filmId, userId);
         checkFilmAndUserExist(filmId, userId);
-        filmRepository.removeLike(filmId, userId);
+        likeRepository.removeLike(filmId, userId);
         log.info("Пользователь {} удалил лайк у фильма {}", userId, filmId);
     }
 

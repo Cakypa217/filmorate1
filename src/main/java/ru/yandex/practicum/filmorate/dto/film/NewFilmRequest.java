@@ -22,6 +22,8 @@ public class NewFilmRequest {
     @PastOrPresent(message = "Дата релиза не может быть в будущем")
     private LocalDate releaseDate;
 
+    private Integer rate;
+
     @Positive(message = "Продолжительность фильма должна быть положительным числом")
     private Long duration;
 

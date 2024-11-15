@@ -39,9 +39,9 @@ public class FilmController {
     }
 
     @PutMapping
-    public FilmDto updateFilm(@Valid @RequestBody NewFilmRequest newFilmRequest) {
+    public NewFilmRequest updateFilm(@Valid @RequestBody NewFilmRequest newFilmRequest) {
         log.info("Получен запрос PUT /films с телом: {}", newFilmRequest);
-        FilmDto updatedFilm = filmService.updateFilm(newFilmRequest);
+        NewFilmRequest updatedFilm = filmService.update(newFilmRequest);
         log.info("Отправлен ответ PUT /films с телом: {}", updatedFilm);
         return updatedFilm;
     }

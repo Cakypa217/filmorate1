@@ -19,7 +19,6 @@ public class GenreService {
     private final GenreRepository genreRepository;
 
     public List<GenreDto> getAllGenres() {
-        log.info("Получен запрос getAllGenres");
         List<Genre> genres = genreRepository.findAll();
         log.info("Получены жанры: {}", genres);
         return genres.stream()
@@ -28,7 +27,6 @@ public class GenreService {
     }
 
     public GenreDto getGenreById(Long id) {
-        log.info("Получен запрос getGenreById с id: {}", id);
         Genre genre = genreRepository.getGenreById(id)
                 .orElseThrow(() -> new NotFoundException("Жанр с id " + id + " не найден"));
         log.info("ОТправлен ответ: {}", GenreMapper.toGenreDto(genre));

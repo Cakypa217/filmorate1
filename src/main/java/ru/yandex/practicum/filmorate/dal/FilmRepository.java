@@ -1,30 +1,27 @@
 package ru.yandex.practicum.filmorate.dal;
 
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.dto.GenreDto;
+import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.*;
 
 @Repository
 public class FilmRepository extends BaseRepository<Film> {
     private static final String FIND_ALL_FILMS = "SELECT * FROM films";
     private static final String FIND_FILM_BY_ID = "SELECT * FROM films WHERE film_id = ?";
-    private static final String CREATE_FILM = "INSERT INTO films (name, description, release_date, duration, mpa_id)" +
-            " VALUES (?, ?, ?, ?, ?)";
-    private static final String CREATE_FILM_MPA = "INSERT INTO film_mpa (film_id, mpa_id) VALUES (?, ?)";
     private static final String CREATE_FILM_GENRES = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
-    private static final String UPDATE_FILM = "UPDATE films SET " +
-            "name = ?, description = ?, release_date = ?, duration = ?, mpa_id = ? WHERE film_id = ?";
-    private static final String ADD_LIKE = "INSERT INTO likes (film_id, user_id) VALUES (?, ?)";
-    private static final String REMOVE_LIKE = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
-    private static final String GET_POPULAR_FILMS = "SELECT f.* FROM films f LEFT " +
-            "JOIN likes l ON f.film_id = l.film_id GROUP BY f.film_id ORDER BY COUNT(l.user_id) DESC LIMIT ?";
+    private static final String GET_POPULAR_FILMS = "SELECT * FROM films ORDER BY rate DESC LIMIT ?";
+    private static final String CREATE_FILM = "INSERT INTO films (" +
+            "name, description, release_date, duration, mpa_id)" +
+            " VALUES (?, ?, ?, ?, ?)";
 
     public FilmRepository(JdbcTemplate jdbcTemplate, RowMapper<Film> filmRowMapper) {
         super(jdbcTemplate, filmRowMapper, Film.class);
@@ -47,32 +44,44 @@ public class FilmRepository extends BaseRepository<Film> {
                 film.getMpa().getId()
         );
         film.setId(id);
-        jdbc.update(CREATE_FILM_MPA, id, film.getMpa().getId());
         Set<Genre> uniqueGenres = new HashSet<>(film.getGenres());
+
         for (Genre genre : uniqueGenres) {
             jdbc.update(CREATE_FILM_GENRES, id, genre.getId());
         }
         return film;
     }
 
-    public Film update(Film film) {
-        update(UPDATE_FILM,
-                film.getName(),
-                film.getDescription(),
-                film.getReleaseDate(),
-                film.getDuration(),
-                film.getMpa().getId(),
-                film.getId()
-        );
-        return film;
+    public void update(NewFilmRequest film) {
+        String sqlQuery = "UPDATE films SET name = ?, description = ?, release_date = ?, " +
+                "duration = ?, RATE  = ?, mpa_id = ? WHERE film_id = ?";
+        try {
+            jdbc.update(sqlQuery, film.getName(), film.getDescription(), film.getReleaseDate(),
+                    film.getDuration(), film.getRate(), film.getMpa().getId(), film.getId());
+        } catch (Exception e) {
+            throw e;
+        }
+        saveGenres(film);
     }
 
-    public void addLike(long filmId, long userId) {
-        jdbc.update(ADD_LIKE, filmId, userId);
-    }
+    private void saveGenres(NewFilmRequest film) {
+        final Long filmId = film.getId();
+        jdbc.update("DELETE FROM film_genres WHERE film_id = ?", filmId);
+        final List<GenreDto> genres = film.getGenres();
+        if (genres == null || genres.isEmpty()) {
+            return;
+        }
+        final ArrayList<GenreDto> genreList = new ArrayList<>(genres);
+        jdbc.batchUpdate(CREATE_FILM_GENRES, new BatchPreparedStatementSetter() {
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                ps.setLong(1, filmId);
+                ps.setLong(2, genreList.get(i).getId());
+            }
 
-    public void removeLike(long filmId, long userId) {
-        jdbc.update(REMOVE_LIKE, filmId, userId);
+            public int getBatchSize() {
+                return genreList.size();
+            }
+        });
     }
 
     public List<Film> getPopularFilms(int count) {

@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.MpaRepository;
 import ru.yandex.practicum.filmorate.dto.MpaDto;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.mapper.MpaMapper;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
@@ -18,7 +19,6 @@ public class MpaService {
     private final MpaRepository mpaRepository;
 
     public List<MpaDto> getAllMpa() {
-        log.info("Получен запрос getAllMpa");
         List<Mpa> mpaList = mpaRepository.findAll();
         log.info("Получен список всех рейтингов MPA. Количество: {}", mpaList.size());
         return mpaList.stream()
@@ -27,8 +27,7 @@ public class MpaService {
     }
 
     public MpaDto getMpaById(Long id) {
-        log.info("Получен запрос getMpaById с id: {}", id);
-        Mpa mpa = mpaRepository.MpaById(id);
+        Mpa mpa = mpaRepository.getMpaById(id, () -> new NotFoundException("MPA с id " + id + " не найден"));
         log.info("Отправлен ответ MpaMapper.mapToMpaDto(mpa): {}", MpaMapper.mapToMpaDto(mpa));
         return MpaMapper.mapToMpaDto(mpa);
     }

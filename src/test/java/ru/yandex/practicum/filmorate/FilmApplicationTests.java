@@ -117,7 +117,7 @@ public class FilmApplicationTests {
         updatedGenreDto.setName("Comedy");
         updateFilmRequest.setGenres(List.of(updatedGenreDto));
 
-        FilmDto updatedFilm = filmService.updateFilm(updateFilmRequest);
+        NewFilmRequest updatedFilm = filmService.update(updateFilmRequest);
 
         assertThat(updatedFilm).isNotNull();
         assertThat(updatedFilm.getId()).isEqualTo(addedFilm.getId());
