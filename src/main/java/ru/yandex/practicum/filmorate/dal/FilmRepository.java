@@ -15,10 +15,18 @@ import java.util.*;
 
 @Repository
 public class FilmRepository extends BaseRepository<Film> {
-    private static final String FIND_ALL_FILMS = "SELECT * FROM films";
-    private static final String FIND_FILM_BY_ID = "SELECT * FROM films WHERE film_id = ?";
+    private static final String FIND_ALL_FILMS = "SELECT f.*, m.mpa_id AS mpa_id, m.name AS mpa_name " +
+            "FROM films f " +
+            "JOIN mpa m ON f.mpa_id = m.mpa_id";
+    private static final String FIND_FILM_BY_ID = "SELECT f.*, m.mpa_id AS mpa_id, m.name AS mpa_name " +
+            "FROM films f " +
+            "JOIN mpa m ON f.mpa_id = m.mpa_id " +
+            "WHERE f.film_id = ?";
     private static final String CREATE_FILM_GENRES = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
-    private static final String GET_POPULAR_FILMS = "SELECT * FROM films ORDER BY rate DESC LIMIT ?";
+    private static final String GET_POPULAR_FILMS = "SELECT f.*, m.mpa_id AS mpa_id, m.name AS mpa_name " +
+            "FROM films f " +
+            "JOIN mpa m ON f.mpa_id = m.mpa_id " +
+            "ORDER BY f.rate DESC LIMIT ?";
     private static final String CREATE_FILM = "INSERT INTO films (" +
             "name, description, release_date, duration, mpa_id)" +
             " VALUES (?, ?, ?, ?, ?)";

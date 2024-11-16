@@ -58,11 +58,6 @@ public class FilmService {
     public List<Film> getAllFilms() {
         final List<Film> films = filmRepository.findAll();
         genreRepository.load(films);
-        films.forEach(film -> {
-            Mpa mpa = mpaRepository.getMpaById(film.getMpa().getId(),
-                    () -> new MpaNotFoundException("MPA с id " + film.getMpa().getId() + " не найден"));
-            film.setMpa(mpa);
-        });
         log.info("Найдены фильмы: {}", films);
         return films;
     }
@@ -71,9 +66,6 @@ public class FilmService {
     public FilmDto getFilmById(Long id) {
         Film film = filmRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Фильм не найден"));
-        Mpa mpa = mpaRepository.getMpaById(film.getMpa().getId(),
-                () -> new MpaNotFoundException("MPA с id " + film.getMpa().getId() + " не найден"));
-        film.setMpa(mpa);
         genreRepository.load(Collections.singletonList(film));
         log.info("Отправлен ответ с FilmMapper.mapToFilmDto(film): {}", FilmMapper.mapToFilmDto(film));
         return FilmMapper.mapToFilmDto(film);
@@ -92,11 +84,6 @@ public class FilmService {
     public List<Film> getPopularFilms(int count) {
         List<Film> popularFilms = filmRepository.getPopularFilms(count);
         genreRepository.load(popularFilms);
-        popularFilms.forEach(film -> {
-            Mpa mpa = mpaRepository.getMpaById(film.getMpa().getId(),
-                    () -> new MpaNotFoundException("MPA с id " + film.getMpa().getId() + " не найден"));
-            film.setMpa(mpa);
-        });
         log.info("Получен список популярных фильмов. Количество: {}", popularFilms.size());
         return popularFilms;
     }
