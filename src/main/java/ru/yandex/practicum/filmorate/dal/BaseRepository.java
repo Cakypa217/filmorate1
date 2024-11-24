@@ -11,6 +11,7 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @RequiredArgsConstructor
 public class BaseRepository<T> {
@@ -28,7 +29,9 @@ public class BaseRepository<T> {
     }
 
     protected List<T> findMany(String query, Object... params) {
-        return jdbc.queryForList(query, entityType, params);
+        try(Stream<T> stream = jdbc.queryForStream(query,mapper,params)) {
+            return stream.toList();
+        }
     }
 
     protected boolean delete(String query, Object... params) {
