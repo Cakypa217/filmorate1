@@ -54,6 +54,11 @@ public class FilmService {
         return FilmMapper.mapToFilmDto(film);
     }
 
+    public void deleteFilm(Long id) {
+        filmRepository.deleteFilm(id);
+        log.info("Фильм с id {} удален", id);
+    }
+
 
     public List<Film> getAllFilms() {
         final List<Film> films = filmRepository.findAll();

@@ -30,6 +30,7 @@ public class FilmRepository extends BaseRepository<Film> {
     private static final String CREATE_FILM = "INSERT INTO films (" +
             "name, description, release_date, duration, mpa_id)" +
             " VALUES (?, ?, ?, ?, ?)";
+    private static final String DELETE_FILM = "DELETE FROM films WHERE film_id = ?";
 
     public FilmRepository(JdbcTemplate jdbcTemplate, RowMapper<Film> filmRowMapper) {
         super(jdbcTemplate, filmRowMapper, Film.class);
@@ -58,6 +59,10 @@ public class FilmRepository extends BaseRepository<Film> {
             jdbc.update(CREATE_FILM_GENRES, id, genre.getId());
         }
         return film;
+    }
+
+    public void deleteFilm(long filmId) {
+        jdbc.update(DELETE_FILM, filmId);
     }
 
     public void update(NewFilmRequest film) {

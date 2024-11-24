@@ -40,6 +40,11 @@ public class UserService {
         return updatedUser;
     }
 
+    public void deleteUser(Long userId) {
+        userRepository.delete(userId);
+        log.info("Удален пользователь с id: {}", userId);
+    }
+
     public List<User> getAllUsers() {
         List<User> users = userRepository.findAll();
         log.info("Получен список всех пользователей. Количество: {}", users.size());
