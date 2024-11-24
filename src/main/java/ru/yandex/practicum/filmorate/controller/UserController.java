@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
@@ -80,5 +81,13 @@ public class UserController {
         List<User> commonFriends = userService.getCommonFriends(id, otherId);
         log.info("Отправлен ответ GET /users/{}/friends/common/{} с количеством общих друзей: {}", id, otherId, commonFriends.size());
         return commonFriends;
+    }
+
+    @GetMapping("/{id}/feed")
+    public List<Event> getUserFeed(@PathVariable Long id) {
+        log.info("Получен запрос GET /users/{}/feed", id);
+        List<Event> events = userService.getUserEvents(id);
+        log.info("Отправлен ответ GET /users/{}/feed с количеством событий: {}", id, events.size());
+        return events;
     }
 }

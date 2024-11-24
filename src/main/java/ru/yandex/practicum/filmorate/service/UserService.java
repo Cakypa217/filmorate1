@@ -3,12 +3,15 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dal.EventRepository;
 import ru.yandex.practicum.filmorate.dal.FriendsRepository;
 import ru.yandex.practicum.filmorate.dal.UserRepository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.User;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -17,11 +20,14 @@ import java.util.List;
 public class UserService {
     private final UserRepository userRepository;
     private final FriendsRepository friendsRepository;
+    private final EventRepository eventRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository, FriendsRepository friendsRepository) {
+    public UserService(UserRepository userRepository, FriendsRepository friendsRepository,
+                       EventRepository eventRepository) {
         this.userRepository = userRepository;
         this.friendsRepository = friendsRepository;
+        this.eventRepository = eventRepository;
     }
 
     public User createUser(User user) {
@@ -57,6 +63,8 @@ public class UserService {
         userRepository.findById(friendId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + friendId + " не найден"));
         friendsRepository.addFriend(userId, friendId);
+        eventRepository.save(new Event(Instant.now().getEpochSecond(), userId,
+                "FRIEND", "ADD", friendId));
         log.info("Пользователь {} добавил в друзья пользователя {}", userId, friendId);
     }
 
@@ -66,6 +74,8 @@ public class UserService {
         userRepository.findById(friendId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + friendId + " не найден"));
         friendsRepository.deleteFriend(userId, friendId);
+        eventRepository.save(new Event(Instant.now().getEpochSecond(), userId,
+                "FRIEND", "REMOVE", friendId));
         log.info("Пользователь {} удалил из друзей пользователя {}", userId, friendId);
     }
 
@@ -82,6 +92,12 @@ public class UserService {
         log.info("Получен список общих друзей пользователей {} и {}. Количество: {}",
                 userId, otherUserId, commonFriends.size());
         return commonFriends;
+    }
+
+    public List<Event> getUserEvents(Long userId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + " не найден"));
+        return eventRepository.getUserEvents(userId);
     }
 
     private void validateUser(User user) {

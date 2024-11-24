@@ -10,10 +10,12 @@ import ru.yandex.practicum.filmorate.exception.MpaNotFoundException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
@@ -28,16 +30,18 @@ public class FilmService {
     private final MpaRepository mpaRepository;
     private final UserRepository userRepository;
     private final LikeRepository likeRepository;
+    private final EventRepository eventRepository;
 
     @Autowired
     public FilmService(FilmRepository filmRepository, GenreRepository genreRepository,
                        MpaRepository mpaRepository, UserRepository userRepository
-            , LikeRepository likeRepository) {
+            , LikeRepository likeRepository, EventRepository eventRepository) {
         this.filmRepository = filmRepository;
         this.genreRepository = genreRepository;
         this.mpaRepository = mpaRepository;
         this.userRepository = userRepository;
         this.likeRepository = likeRepository;
+        this.eventRepository = eventRepository;
     }
 
     public FilmDto createFilm(NewFilmRequest newFilmRequest) {
@@ -91,12 +95,16 @@ public class FilmService {
     public void addLike(Long filmId, Long userId) {
         checkFilmAndUserExist(filmId, userId);
         likeRepository.addLike(filmId, userId);
+        eventRepository.save(new Event(Instant.now().getEpochSecond(), userId,
+                "LIKE", "ADD", filmId));
         log.info("Пользователь {} поставил лайк фильму {}", userId, filmId);
     }
 
     public void removeLike(Long filmId, Long userId) {
         checkFilmAndUserExist(filmId, userId);
         likeRepository.removeLike(filmId, userId);
+        eventRepository.save(new Event(Instant.now().getEpochSecond(), userId,
+                "LIKE", "REMOVE", filmId));
         log.info("Пользователь {} удалил лайк у фильма {}", userId, filmId);
     }
 
