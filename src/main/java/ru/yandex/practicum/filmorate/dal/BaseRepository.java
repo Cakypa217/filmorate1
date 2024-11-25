@@ -29,9 +29,7 @@ public class BaseRepository<T> {
     }
 
     protected List<T> findMany(String query, Object... params) {
-        try(Stream<T> stream = jdbc.queryForStream(query,mapper,params)) {
-            return stream.toList();
-        }
+        return jdbc.query(query, mapper, params);
     }
 
     protected boolean delete(String query, Object... params) {
