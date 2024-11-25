@@ -61,8 +61,8 @@ public class FilmRepository extends BaseRepository<Film> {
         return film;
     }
 
-    public void deleteFilm(long filmId) {
-        jdbc.update(DELETE_FILM, filmId);
+    public int deleteFilm(long filmId) {
+        return jdbc.update(DELETE_FILM, filmId);
     }
 
     public void update(NewFilmRequest film) {

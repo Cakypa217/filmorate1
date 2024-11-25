@@ -55,10 +55,12 @@ public class FilmService {
     }
 
     public void deleteFilm(Long id) {
-        filmRepository.deleteFilm(id);
+        int rowsAffected = filmRepository.deleteFilm(id);
+        if (rowsAffected == 0) {
+            throw new NotFoundException("Фильм с id " + id + " не найден");
+        }
         log.info("Фильм с id {} удален", id);
     }
-
 
     public List<Film> getAllFilms() {
         final List<Film> films = filmRepository.findAll();

@@ -36,8 +36,8 @@ public class UserRepository extends BaseRepository<User> {
         return user;
     }
 
-    public void delete(long id) {
-        delete(DELETE_USER, id);
+    public int delete(long id) {
+       return jdbc.update(DELETE_USER, id);
     }
 
     public void update(User user) {
