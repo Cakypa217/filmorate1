@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class FilmService {
     private static final LocalDate CINEMA_BIRTHDAY = LocalDate.of(1895, 12, 28);
     private final FilmRepository filmRepository;
@@ -31,18 +33,6 @@ public class FilmService {
     private final UserRepository userRepository;
     private final LikeRepository likeRepository;
     private final EventRepository eventRepository;
-
-    @Autowired
-    public FilmService(FilmRepository filmRepository, GenreRepository genreRepository,
-                       MpaRepository mpaRepository, UserRepository userRepository
-            , LikeRepository likeRepository, EventRepository eventRepository) {
-        this.filmRepository = filmRepository;
-        this.genreRepository = genreRepository;
-        this.mpaRepository = mpaRepository;
-        this.userRepository = userRepository;
-        this.likeRepository = likeRepository;
-        this.eventRepository = eventRepository;
-    }
 
     public FilmDto createFilm(NewFilmRequest newFilmRequest) {
         Mpa mpa = mpaRepository.getMpaById(newFilmRequest.getMpa().getId(),
@@ -58,14 +48,12 @@ public class FilmService {
         return FilmMapper.mapToFilmDto(film);
     }
 
-
     public List<Film> getAllFilms() {
         final List<Film> films = filmRepository.findAll();
         genreRepository.load(films);
         log.info("Найдены фильмы: {}", films);
         return films;
     }
-
 
     public FilmDto getFilmById(Long id) {
         Film film = filmRepository.findById(id)
@@ -75,6 +63,15 @@ public class FilmService {
         return FilmMapper.mapToFilmDto(film);
     }
 
+    public List<Film> getFilmsByIds(List<Long> ids) {
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        final List<Film> films = filmRepository.findByIds(ids);
+        genreRepository.load(films);
+        log.info("Найдены фильмы по заданному списку id: {}", films);
+        return films;
+    }
 
     public NewFilmRequest update(NewFilmRequest newFilmRequest) {
         Film film = filmRepository.findById(newFilmRequest.getId())
@@ -106,6 +103,10 @@ public class FilmService {
         eventRepository.save(new Event(Instant.now().getEpochSecond(), userId,
                 "LIKE", "REMOVE", filmId));
         log.info("Пользователь {} удалил лайк у фильма {}", userId, filmId);
+    }
+
+    public List<Film> getRecommendations(Long userId) {
+        return getFilmsByIds(likeRepository.getRecommendedFilmsIds(userId));
     }
 
     private void checkFilmAndUserExist(Long filmId, Long userId) {
