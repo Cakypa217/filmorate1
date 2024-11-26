@@ -28,6 +28,12 @@ public class FilmRepository extends BaseRepository<Film> {
             "FROM films f " +
             "JOIN mpa m ON f.mpa_id = m.mpa_id " +
             "ORDER BY f.rate DESC LIMIT ?";
+    private static final String GET_COMMON_FILMS = "SELECT f.*, m.mpa_id AS mpa_id, m.name AS mpa_name" +
+            " FROM likes AS l" +
+            " JOIN films AS f ON l.film_id = f.film_id" +
+            " JOIN mpa m ON f.mpa_id = m.mpa_id" +
+            " WHERE l.user_id = ?" +
+            " AND l.film_id IN (SELECT fl.film_id FROM likes AS fl WHERE fl.user_id = ?)";
     private static final String CREATE_FILM = "INSERT INTO films (" +
             "name, description, release_date, duration, mpa_id)" +
             " VALUES (?, ?, ?, ?, ?)";
@@ -104,6 +110,10 @@ public class FilmRepository extends BaseRepository<Film> {
 
     public List<Film> getPopularFilms(int count) {
         return jdbc.query(GET_POPULAR_FILMS, mapper, count);
+    }
+
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        return jdbc.query(GET_COMMON_FILMS, mapper, userId, friendId);
     }
 }
 
