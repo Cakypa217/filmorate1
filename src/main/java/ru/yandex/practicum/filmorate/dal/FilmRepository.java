@@ -34,6 +34,7 @@ public class FilmRepository extends BaseRepository<Film> {
     private static final String CREATE_FILM = "INSERT INTO films (" +
             "name, description, release_date, duration, mpa_id)" +
             " VALUES (?, ?, ?, ?, ?)";
+    private static final String DELETE_FILM = "DELETE FROM films WHERE film_id = ?";
     private static final String FIND_FILMS_BY_IDS = FIND_ALL_FILMS +
             " WHERE film_id IN (?)";
     private static final String CREATE_FILM_DIRECTORS = "INSERT INTO directed_by (director_id, film_id) VALUES (?, ?)";
@@ -96,6 +97,10 @@ public class FilmRepository extends BaseRepository<Film> {
         }
 
         return film;
+    }
+
+    public int deleteFilm(long filmId) {
+        return jdbc.update(DELETE_FILM, filmId);
     }
 
     public void update(NewFilmRequest film) {

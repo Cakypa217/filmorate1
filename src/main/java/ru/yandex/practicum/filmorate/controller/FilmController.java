@@ -39,6 +39,13 @@ public class FilmController {
         return addedFilm;
     }
 
+    @DeleteMapping("/{filmId}")
+    public void deleteFilm(@PathVariable("filmId") Long id) {
+        log.info("Получен запрос DELETE /films/{}", id);
+        filmService.deleteFilm(id);
+        log.info("Отправлен ответ DELETE /films/{}", id);
+    }
+
     @PutMapping
     public NewFilmRequest updateFilm(@Valid @RequestBody NewFilmRequest newFilmRequest) {
         log.info("Получен запрос PUT /films с телом: {}", newFilmRequest);

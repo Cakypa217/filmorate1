@@ -48,6 +48,14 @@ public class FilmService {
         return FilmMapper.mapToFilmDto(film);
     }
 
+    public void deleteFilm(Long id) {
+        int rowsAffected = filmRepository.deleteFilm(id);
+        if (rowsAffected == 0) {
+            throw new NotFoundException("Фильм с id " + id + " не найден");
+        }
+        log.info("Фильм с id {} удален", id);
+    }
+
     public List<Film> getAllFilms() {
         final List<Film> films = filmRepository.findAll();
         genreRepository.load(films);
