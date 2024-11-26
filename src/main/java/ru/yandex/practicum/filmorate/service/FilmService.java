@@ -97,6 +97,13 @@ public class FilmService {
         return popularFilms;
     }
 
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        List<Film> commonFilms = filmRepository.getCommonFilms(userId, friendId);
+        genreRepository.load(commonFilms);
+        log.info("Получен список общих фильмов. Количество: {}", commonFilms.size());
+        return commonFilms;
+    }
+  
     public List<Film> getDirectorsFilms(Long directorId, String sortBy) {
         try {
             List<Film> directorsFilms = filmRepository.getDirectorsFilms(directorId, DirectorQueryParams.valueOf(sortBy));
