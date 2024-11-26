@@ -14,6 +14,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,8 +30,7 @@ public class FilmRepository extends BaseRepository<Film> {
     private static final String CREATE_FILM_GENRES = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
     private static final String GET_POPULAR_FILMS = "SELECT f.*, m.mpa_id AS mpa_id, m.name AS mpa_name " +
             "FROM films f " +
-            "JOIN mpa m ON f.mpa_id = m.mpa_id " +
-            "ORDER BY f.rate DESC LIMIT ?";
+            "JOIN mpa m ON f.mpa_id = m.mpa_id ";
     private static final String CREATE_FILM = "INSERT INTO films (" +
             "name, description, release_date, duration, mpa_id)" +
             " VALUES (?, ?, ?, ?, ?)";
@@ -131,6 +131,27 @@ public class FilmRepository extends BaseRepository<Film> {
         });
     }
 
+
+    public List<Film> getPopularFilms(Integer count, Optional<Long> genreId, Optional<Integer> year) {
+        String getPopularFilmsSB = GET_POPULAR_FILMS +
+                (genreId.isPresent() ?
+                        " JOIN film_genres AS fg ON f.film_id = fg.film_id AND fg.genre_id = ?" :
+                        "") +
+                (year.isPresent() ?
+                        " WHERE f.release_date >= ? AND f.release_date <= ? " :
+                        "") +
+                " ORDER BY f.rate DESC LIMIT ?";
+
+        ArrayList<Object> args = new ArrayList<Object>();
+        genreId.ifPresent(args::add);
+        if (year.isPresent()) {
+            args.add(LocalDate.of(year.get(), 1, 1).toString());
+            args.add(LocalDate.of(year.get(), 12, 31).toString());
+        }
+        args.add(count);
+        return jdbc.query(getPopularFilmsSB, mapper, args.toArray());
+    }
+
     private void saveDirectors(NewFilmRequest film) {
         final Long filmId = film.getId();
         jdbc.update("DELETE FROM directed_by WHERE film_id = ?", filmId);
@@ -149,10 +170,6 @@ public class FilmRepository extends BaseRepository<Film> {
                 return directorsList.size();
             }
         });
-    }
-
-    public List<Film> getPopularFilms(int count) {
-        return jdbc.query(GET_POPULAR_FILMS, mapper, count);
     }
 
     public List<Film> getDirectorsFilms(long directorId, DirectorQueryParams param) {

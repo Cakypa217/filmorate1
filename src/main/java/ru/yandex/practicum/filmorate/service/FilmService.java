@@ -15,6 +15,7 @@ import ru.yandex.practicum.filmorate.model.*;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -81,8 +82,8 @@ public class FilmService {
         return newFilmRequest;
     }
 
-    public List<Film> getPopularFilms(int count) {
-        List<Film> popularFilms = filmRepository.getPopularFilms(count);
+    public List<Film> getPopularFilms(Integer count, Optional<Long> genreId, Optional<Integer> year) {
+        List<Film> popularFilms = filmRepository.getPopularFilms(count, genreId, year);
         genreRepository.load(popularFilms);
         log.info("Получен список популярных фильмов. Количество: {}", popularFilms.size());
         return popularFilms;
