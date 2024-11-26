@@ -1,24 +1,23 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.List;
 
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/users")
 public class UserController {
     private final UserService userService;
-
-    @Autowired
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
+    private final FilmService filmService;
 
     @GetMapping
     public List<User> getAllUsers() {
@@ -87,5 +86,12 @@ public class UserController {
         List<User> commonFriends = userService.getCommonFriends(id, otherId);
         log.info("Отправлен ответ GET /users/{}/friends/common/{} с количеством общих друзей: {}", id, otherId, commonFriends.size());
         return commonFriends;
+    }
+    @GetMapping("/{id}/recommendations")
+    public List<Film> getRecommendations(@PathVariable Long id) {
+        log.info("Получен запрос GET /users/{}/recommendations", id);
+        final List<Film> recommendedFilms = filmService.getRecommendations(id);
+        log.info("Отправлен ответ GET /users/{}/recommendations с количеством фильмов: {}", id, recommendedFilms.size());
+        return recommendedFilms;
     }
 }

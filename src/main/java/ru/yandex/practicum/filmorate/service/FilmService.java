@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.*;
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
@@ -10,17 +10,17 @@ import ru.yandex.practicum.filmorate.exception.MpaNotFoundException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.model.*;
 
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class FilmService {
     private static final LocalDate CINEMA_BIRTHDAY = LocalDate.of(1895, 12, 28);
     private final FilmRepository filmRepository;
@@ -28,17 +28,7 @@ public class FilmService {
     private final MpaRepository mpaRepository;
     private final UserRepository userRepository;
     private final LikeRepository likeRepository;
-
-    @Autowired
-    public FilmService(FilmRepository filmRepository, GenreRepository genreRepository,
-                       MpaRepository mpaRepository, UserRepository userRepository
-            , LikeRepository likeRepository) {
-        this.filmRepository = filmRepository;
-        this.genreRepository = genreRepository;
-        this.mpaRepository = mpaRepository;
-        this.userRepository = userRepository;
-        this.likeRepository = likeRepository;
-    }
+    private final DirectorRepository directorRepository;
 
     public FilmDto createFilm(NewFilmRequest newFilmRequest) {
         Mpa mpa = mpaRepository.getMpaById(newFilmRequest.getMpa().getId(),
@@ -47,7 +37,11 @@ public class FilmService {
                 .map(genreDto -> genreRepository.getGenreById(genreDto.getId())
                         .orElseThrow(() -> new MpaNotFoundException("Жанр с id " + genreDto.getId() + " не найден")))
                 .collect(Collectors.toList());
-        Film film = FilmMapper.mapToFilm(newFilmRequest, mpa, genres);
+        List<Director> directors = newFilmRequest.getDirectors().stream()
+                .map(directorDto -> directorRepository.getById(directorDto.getId())
+                        .orElseThrow(() -> new NotFoundException("Режиссер с id " + directorDto.getId() + " не найден")))
+                .collect(Collectors.toList());
+        Film film = FilmMapper.mapToFilm(newFilmRequest, mpa, genres, directors);
         validateFilm(film);
         filmRepository.create(film);
         log.info("Отправлен ответ с FilmMapper.mapToFilmDto(film): {}", FilmMapper.mapToFilmDto(film));
@@ -69,7 +63,6 @@ public class FilmService {
         return films;
     }
 
-
     public FilmDto getFilmById(Long id) {
         Film film = filmRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Фильм не найден"));
@@ -78,6 +71,15 @@ public class FilmService {
         return FilmMapper.mapToFilmDto(film);
     }
 
+    public List<Film> getFilmsByIds(List<Long> ids) {
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        final List<Film> films = filmRepository.findByIds(ids);
+        genreRepository.load(films);
+        log.info("Найдены фильмы по заданному списку id: {}", films);
+        return films;
+    }
 
     public NewFilmRequest update(NewFilmRequest newFilmRequest) {
         Film film = filmRepository.findById(newFilmRequest.getId())
@@ -88,11 +90,22 @@ public class FilmService {
         return newFilmRequest;
     }
 
-    public List<Film> getPopularFilms(int count) {
-        List<Film> popularFilms = filmRepository.getPopularFilms(count);
+    public List<Film> getPopularFilms(Integer count, Optional<Long> genreId, Optional<Integer> year) {
+        List<Film> popularFilms = filmRepository.getPopularFilms(count, genreId, year);
         genreRepository.load(popularFilms);
         log.info("Получен список популярных фильмов. Количество: {}", popularFilms.size());
         return popularFilms;
+    }
+
+    public List<Film> getDirectorsFilms(Long directorId, String sortBy) {
+        try {
+            List<Film> directorsFilms = filmRepository.getDirectorsFilms(directorId, DirectorQueryParams.valueOf(sortBy));
+            directorRepository.load(directorsFilms);
+            log.info("Получен список фильмов режиссера {}", directorId);
+            return directorsFilms;
+        } catch (IllegalArgumentException e) {
+            throw new NotFoundException("Некорректный параметр запроса " + sortBy);
+        }
     }
 
     public void addLike(Long filmId, Long userId) {
@@ -105,6 +118,10 @@ public class FilmService {
         checkFilmAndUserExist(filmId, userId);
         likeRepository.removeLike(filmId, userId);
         log.info("Пользователь {} удалил лайк у фильма {}", userId, filmId);
+    }
+
+    public List<Film> getRecommendations(Long userId) {
+        return getFilmsByIds(likeRepository.getRecommendedFilmsIds(userId));
     }
 
     private void checkFilmAndUserExist(Long filmId, Long userId) {
