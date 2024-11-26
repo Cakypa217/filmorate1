@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.*;
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
@@ -48,14 +47,12 @@ public class FilmService {
         return FilmMapper.mapToFilmDto(film);
     }
 
-
     public List<Film> getAllFilms() {
         final List<Film> films = filmRepository.findAll();
         genreRepository.load(films);
         log.info("Найдены фильмы: {}", films);
         return films;
     }
-
 
     public FilmDto getFilmById(Long id) {
         Film film = filmRepository.findById(id)
@@ -65,6 +62,15 @@ public class FilmService {
         return FilmMapper.mapToFilmDto(film);
     }
 
+    public List<Film> getFilmsByIds(List<Long> ids) {
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        final List<Film> films = filmRepository.findByIds(ids);
+        genreRepository.load(films);
+        log.info("Найдены фильмы по заданному списку id: {}", films);
+        return films;
+    }
 
     public NewFilmRequest update(NewFilmRequest newFilmRequest) {
         Film film = filmRepository.findById(newFilmRequest.getId())
@@ -103,6 +109,10 @@ public class FilmService {
         checkFilmAndUserExist(filmId, userId);
         likeRepository.removeLike(filmId, userId);
         log.info("Пользователь {} удалил лайк у фильма {}", userId, filmId);
+    }
+
+    public List<Film> getRecommendations(Long userId) {
+        return getFilmsByIds(likeRepository.getRecommendedFilmsIds(userId));
     }
 
     private void checkFilmAndUserExist(Long filmId, Long userId) {
