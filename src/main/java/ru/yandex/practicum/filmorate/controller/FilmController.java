@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -69,9 +70,11 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10") int count) {
+    public List<Film> getPopularFilms(@RequestParam(name = "count", defaultValue = "10") Integer count,
+                                      @RequestParam(name = "genreId", required = false) Optional<Long> genreId,
+                                      @RequestParam(name = "year", required = false) Optional<Integer> year) {
         log.info("Получен запрос GET /films/popular?count={}", count);
-        List<Film> popularFilms = filmService.getPopularFilms(count);
+        List<Film> popularFilms = filmService.getPopularFilms(count, genreId, year);
         log.info("Отправлен ответ GET /films/popular с количеством фильмов: {}", popularFilms.size());
         return popularFilms;
     }

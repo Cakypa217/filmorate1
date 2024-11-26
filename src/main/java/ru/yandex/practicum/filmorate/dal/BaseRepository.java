@@ -28,7 +28,7 @@ public class BaseRepository<T> {
     }
 
     protected List<T> findMany(String query, Object... params) {
-        return jdbc.queryForList(query, entityType, params);
+        return jdbc.query(query, mapper, params);
     }
 
     protected boolean delete(String query, Object... params) {
