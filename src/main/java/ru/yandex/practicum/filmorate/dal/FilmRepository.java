@@ -13,6 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 public class FilmRepository extends BaseRepository<Film> {
@@ -30,17 +31,26 @@ public class FilmRepository extends BaseRepository<Film> {
     private static final String CREATE_FILM = "INSERT INTO films (" +
             "name, description, release_date, duration, mpa_id)" +
             " VALUES (?, ?, ?, ?, ?)";
+    private static final String FIND_FILMS_BY_IDS = FIND_ALL_FILMS +
+            " WHERE film_id IN (?)";
 
     public FilmRepository(JdbcTemplate jdbcTemplate, RowMapper<Film> filmRowMapper) {
         super(jdbcTemplate, filmRowMapper, Film.class);
     }
 
     public List<Film> findAll() {
-        return jdbc.query(FIND_ALL_FILMS, mapper);
+        return findMany(FIND_ALL_FILMS);
     }
 
     public Optional<Film> findById(long id) {
         return findOne(FIND_FILM_BY_ID, id);
+    }
+
+    public List<Film> findByIds(List<Long> ids) {
+        String idsString = ids.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+        return findMany(FIND_FILMS_BY_IDS, idsString);
     }
 
     public Film create(Film film) {
