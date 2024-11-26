@@ -10,13 +10,12 @@ import ru.yandex.practicum.filmorate.exception.MpaNotFoundException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.model.*;
 
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -29,6 +28,7 @@ public class FilmService {
     private final MpaRepository mpaRepository;
     private final UserRepository userRepository;
     private final LikeRepository likeRepository;
+    private final DirectorRepository directorRepository;
 
     public FilmDto createFilm(NewFilmRequest newFilmRequest) {
         Mpa mpa = mpaRepository.getMpaById(newFilmRequest.getMpa().getId(),
@@ -37,11 +37,23 @@ public class FilmService {
                 .map(genreDto -> genreRepository.getGenreById(genreDto.getId())
                         .orElseThrow(() -> new MpaNotFoundException("Жанр с id " + genreDto.getId() + " не найден")))
                 .collect(Collectors.toList());
-        Film film = FilmMapper.mapToFilm(newFilmRequest, mpa, genres);
+        List<Director> directors = newFilmRequest.getDirectors().stream()
+                .map(directorDto -> directorRepository.getById(directorDto.getId())
+                        .orElseThrow(() -> new NotFoundException("Режиссер с id " + directorDto.getId() + " не найден")))
+                .collect(Collectors.toList());
+        Film film = FilmMapper.mapToFilm(newFilmRequest, mpa, genres, directors);
         validateFilm(film);
         filmRepository.create(film);
         log.info("Отправлен ответ с FilmMapper.mapToFilmDto(film): {}", FilmMapper.mapToFilmDto(film));
         return FilmMapper.mapToFilmDto(film);
+    }
+
+    public void deleteFilm(Long id) {
+        int rowsAffected = filmRepository.deleteFilm(id);
+        if (rowsAffected == 0) {
+            throw new NotFoundException("Фильм с id " + id + " не найден");
+        }
+        log.info("Фильм с id {} удален", id);
     }
 
     public List<Film> getAllFilms() {
@@ -78,8 +90,8 @@ public class FilmService {
         return newFilmRequest;
     }
 
-    public List<Film> getPopularFilms(int count) {
-        List<Film> popularFilms = filmRepository.getPopularFilms(count);
+    public List<Film> getPopularFilms(Integer count, Optional<Long> genreId, Optional<Integer> year) {
+        List<Film> popularFilms = filmRepository.getPopularFilms(count, genreId, year);
         genreRepository.load(popularFilms);
         log.info("Получен список популярных фильмов. Количество: {}", popularFilms.size());
         return popularFilms;
@@ -90,6 +102,17 @@ public class FilmService {
         genreRepository.load(commonFilms);
         log.info("Получен список общих фильмов. Количество: {}", commonFilms.size());
         return commonFilms;
+    }
+  
+    public List<Film> getDirectorsFilms(Long directorId, String sortBy) {
+        try {
+            List<Film> directorsFilms = filmRepository.getDirectorsFilms(directorId, DirectorQueryParams.valueOf(sortBy));
+            directorRepository.load(directorsFilms);
+            log.info("Получен список фильмов режиссера {}", directorId);
+            return directorsFilms;
+        } catch (IllegalArgumentException e) {
+            throw new NotFoundException("Некорректный параметр запроса " + sortBy);
+        }
     }
 
     public void addLike(Long filmId, Long userId) {

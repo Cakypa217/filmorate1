@@ -35,6 +35,13 @@ public class UserController {
         return createdUser;
     }
 
+    @DeleteMapping("/{userId}")
+    public void deleteUser(@PathVariable("userId") Long userId) {
+        log.info("Получен запрос DELETE /users/{}", userId);
+        userService.deleteUser(userId);
+        log.info("Отправлен ответ DELETE /users/{}", userId);
+    }
+
     @PutMapping
     public User updateUser(@Valid @RequestBody User user) {
         log.info("Получен запрос PUT /users с телом: {}", user);
