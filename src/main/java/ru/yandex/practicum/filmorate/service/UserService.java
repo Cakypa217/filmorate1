@@ -46,6 +46,14 @@ public class UserService {
         return updatedUser;
     }
 
+    public void deleteUser(Long userId) {
+        int deletedRows = userRepository.delete(userId);
+        if (deletedRows == 0) {
+            throw new NotFoundException("Пользователь с id " + userId + " не найден");
+        }
+        log.info("Удален пользователь с id: {}", userId);
+    }
+
     public List<User> getAllUsers() {
         List<User> users = userRepository.findAll();
         log.info("Получен список всех пользователей. Количество: {}", users.size());
