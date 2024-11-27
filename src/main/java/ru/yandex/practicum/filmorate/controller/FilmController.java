@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -36,6 +37,13 @@ public class FilmController {
         FilmDto addedFilm = filmService.createFilm(film);
         log.info("Отправлен ответ POST /films с телом: {}", addedFilm);
         return addedFilm;
+    }
+
+    @DeleteMapping("/{filmId}")
+    public void deleteFilm(@PathVariable("filmId") Long id) {
+        log.info("Получен запрос DELETE /films/{}", id);
+        filmService.deleteFilm(id);
+        log.info("Отправлен ответ DELETE /films/{}", id);
     }
 
     @PutMapping
@@ -69,10 +77,30 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10") int count) {
+    public List<Film> getPopularFilms(@RequestParam(name = "count", defaultValue = "10") Integer count,
+                                      @RequestParam(name = "genreId", required = false) Optional<Long> genreId,
+                                      @RequestParam(name = "year", required = false) Optional<Integer> year) {
         log.info("Получен запрос GET /films/popular?count={}", count);
-        List<Film> popularFilms = filmService.getPopularFilms(count);
+        List<Film> popularFilms = filmService.getPopularFilms(count, genreId, year);
         log.info("Отправлен ответ GET /films/popular с количеством фильмов: {}", popularFilms.size());
         return popularFilms;
+    }
+
+    @GetMapping("/common")
+    public List<Film> getCommonFilms(@RequestParam(name = "userId") Long userId,
+                                     @RequestParam(name = "friendId") Long friendId) {
+        log.info("Получен запрос GET /films/common?userId={}&friendId={}", userId, friendId);
+        List<Film> commonFilms = filmService.getCommonFilms(userId, friendId);
+        log.info("Отправлен ответ GET /films/common с количеством фильмов: {}", commonFilms.size());
+        return commonFilms;
+    }
+  
+    @GetMapping("/director/{directorId}")
+    public List<Film> getDirectorsFilms(@PathVariable Long directorId,
+                                        @RequestParam(name = "sortBy") String sortBy) {
+        log.info("Получен запрос GET /films/director/{}?sortBy=[{}]", directorId, sortBy);
+        List<Film> directorsFilms = filmService.getDirectorsFilms(directorId, sortBy);
+        log.info("Отправлен ответ GET /films/director с количеством фильмов: {}", directorsFilms.size());
+        return directorsFilms;
     }
 }
