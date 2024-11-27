@@ -3,18 +3,17 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dal.FilmRepository;
-import ru.yandex.practicum.filmorate.dal.ReviewRepository;
-import ru.yandex.practicum.filmorate.dal.UsefulRepository;
-import ru.yandex.practicum.filmorate.dal.UserRepository;
+import ru.yandex.practicum.filmorate.dal.*;
 import ru.yandex.practicum.filmorate.dto.reviews.NewReviewRequestDto;
 import ru.yandex.practicum.filmorate.dto.reviews.ReviewResponseDto;
 import ru.yandex.practicum.filmorate.dto.reviews.UpdateReviewRequestDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.ReviewMapper;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Review;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -27,6 +26,7 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final FilmRepository filmRepository;
     private final UsefulRepository usefulRepository;
+    private final EventRepository eventRepository;
 
     public ReviewResponseDto addNewReview(NewReviewRequestDto request) {
         checkUserId(request.getUserId());
@@ -36,6 +36,9 @@ public class ReviewService {
         Review review = ReviewMapper.mapToReview(request);
         review.setCount(0);
         review = reviewRepository.addNewReview(review);
+        Event event = new Event(Instant.now().toEpochMilli(), request.getUserId(), "REVIEW",
+                "ADD", review.getId());
+        eventRepository.save(event);
         return ReviewMapper.mapToReviewDto(review);
     }
 
@@ -47,13 +50,22 @@ public class ReviewService {
         Review review = reviewOp.get();
         ReviewMapper.updateReview(review, request);
         review = reviewRepository.updateReview(review);
+        Event event = new Event(Instant.now().toEpochMilli(), request.getUserId(), "REVIEW",
+                "UPDATE", review.getId());
+        eventRepository.save(event);
         return ReviewMapper.mapToReviewDto(review);
     }
 
     public void deleteReview(Long id) {
+        Review review = reviewRepository.getReviewById(id)
+                .orElseThrow(() -> new NotFoundException("Отзыв с id " + id + " не найден"));
         boolean check = reviewRepository.deleteReview(id);
         if (!check) {
             throw new NotFoundException("Отзыв с id " + id + " не найден");
+        } else {
+            Event event = new Event(Instant.now().toEpochMilli(), review.getUserId(), "REVIEW",
+                    "REMOVE", id);
+            eventRepository.save(event);
         }
     }
 

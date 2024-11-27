@@ -71,7 +71,7 @@ public class UserService {
         userRepository.findById(friendId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + friendId + " не найден"));
         friendsRepository.addFriend(userId, friendId);
-        eventRepository.save(new Event(Instant.now().getEpochSecond(), userId,
+        eventRepository.save(new Event(Instant.now().toEpochMilli(), userId,
                 "FRIEND", "ADD", friendId));
         log.info("Пользователь {} добавил в друзья пользователя {}", userId, friendId);
     }
@@ -82,7 +82,7 @@ public class UserService {
         userRepository.findById(friendId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + friendId + " не найден"));
         friendsRepository.deleteFriend(userId, friendId);
-        eventRepository.save(new Event(Instant.now().getEpochSecond(), userId,
+        eventRepository.save(new Event(Instant.now().toEpochMilli(), userId,
                 "FRIEND", "REMOVE", friendId));
         log.info("Пользователь {} удалил из друзей пользователя {}", userId, friendId);
     }

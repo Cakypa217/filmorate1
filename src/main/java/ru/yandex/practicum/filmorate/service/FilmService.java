@@ -120,7 +120,7 @@ public class FilmService {
     public void addLike(Long filmId, Long userId) {
         checkFilmAndUserExist(filmId, userId);
         likeRepository.addLike(filmId, userId);
-        eventRepository.save(new Event(Instant.now().getEpochSecond(), userId,
+        eventRepository.save(new Event(Instant.now().toEpochMilli(), userId,
                 "LIKE", "ADD", filmId));
         log.info("Пользователь {} поставил лайк фильму {}", userId, filmId);
     }
@@ -128,7 +128,7 @@ public class FilmService {
     public void removeLike(Long filmId, Long userId) {
         checkFilmAndUserExist(filmId, userId);
         likeRepository.removeLike(filmId, userId);
-        eventRepository.save(new Event(Instant.now().getEpochSecond(), userId,
+        eventRepository.save(new Event(Instant.now().toEpochMilli(), userId,
                 "LIKE", "REMOVE", filmId));
         log.info("Пользователь {} удалил лайк у фильма {}", userId, filmId);
     }

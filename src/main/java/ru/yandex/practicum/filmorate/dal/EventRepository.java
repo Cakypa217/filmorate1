@@ -13,8 +13,7 @@ public class EventRepository {
 
     private static final String SAVE_EVENT = "INSERT INTO events " +
             "(timestamp, user_id, event_type, operation, entity_id) VALUES (?, ?, ?, ?, ?)";
-    private static final String FIND_EVENT_BY_USER_ID = "SELECT * FROM events WHERE user_id = ? " +
-            "ORDER BY timestamp DESC";
+    private static final String FIND_EVENT_BY_USER_ID = "SELECT * FROM events WHERE user_id = ?";
 
     private final JdbcTemplate jdbcTemplate;
 
