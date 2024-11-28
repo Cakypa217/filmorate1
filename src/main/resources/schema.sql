@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS likes (
     user_id BIGINT,
     PRIMARY KEY (film_id, user_id),
     FOREIGN KEY (film_id) REFERENCES films(film_id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS friendships (
@@ -70,8 +70,8 @@ CREATE TABLE IF NOT EXISTS reviews (
     content VARCHAR(350) NOT NULL,
     film_id BIGINT,
     user_id BIGINT,
-    FOREIGN KEY (film_id) REFERENCES films(film_id),
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    FOREIGN KEY (film_id) REFERENCES films(film_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS useful (
@@ -80,8 +80,8 @@ CREATE TABLE IF NOT EXISTS useful (
     user_id BIGINT,
     useful_count BIGINT,
     UNIQUE (review_id, user_id),
-    FOREIGN KEY (review_id) REFERENCES reviews(review_id) ,
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    FOREIGN KEY (review_id) REFERENCES reviews(review_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS events (
@@ -91,5 +91,5 @@ CREATE TABLE IF NOT EXISTS events (
     event_type VARCHAR(50) NOT NULL,
     operation VARCHAR(50) NOT NULL,
     entity_id BIGINT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );

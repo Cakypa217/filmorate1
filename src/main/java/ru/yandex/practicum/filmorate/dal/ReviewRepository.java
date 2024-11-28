@@ -11,25 +11,25 @@ import java.util.Optional;
 @Repository
 public class ReviewRepository extends BaseRepository<Review> {
     private static final String BASE_QUERY = """
-            SELECT r.review_id, r.isPositive, r.content, r.film_id, r.user_id, SUM(u.useful_count) AS useful
+            SELECT r.review_id, r.isPositive, r.content, r.film_id, r.user_id, SUM(u.useful_count) AS usefulness
              FROM reviews r
              LEFT JOIN useful u ON u.review_id = r.review_id
             """;
     private static final String FIND_ALL_QUERY = BASE_QUERY + """
              WHERE r.film_id = ?
              GROUP BY r.review_id
-             ORDER BY useful DESC
+             ORDER BY usefulness DESC
              LIMIT ?;
             """;
     private static final String FIND_ALL_WITH_LIMIT_QUERY = BASE_QUERY + """
              GROUP BY r.review_id
-             ORDER BY useful DESC
+             ORDER BY usefulness DESC
              LIMIT ?;
             """;
     private static final String FIND_ALL_BY_FILM_ID_QUERY = BASE_QUERY + """
              WHERE r.film_id = ?
              GROUP BY r.review_id
-             ORDER BY useful DESC;
+             ORDER BY usefulness DESC;
             """;
     private static final String FIND_BY_ID_QUERY = BASE_QUERY + """
              WHERE r.review_id = ?
@@ -82,7 +82,7 @@ public class ReviewRepository extends BaseRepository<Review> {
         return review;
     }
 
-    public boolean deleteReview(long reviewId) {
+    public boolean deleteReview(Long reviewId) {
         return delete(DELETE_BY_ID_QUERY, reviewId);
     }
 }
