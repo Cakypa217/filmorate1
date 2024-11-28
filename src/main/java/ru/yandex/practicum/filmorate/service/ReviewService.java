@@ -12,6 +12,8 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.ReviewMapper;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.OperationType;
 
 import java.time.Instant;
 import java.util.List;
@@ -36,8 +38,8 @@ public class ReviewService {
         Review review = ReviewMapper.mapToReview(request);
         review.setCount(0);
         review = reviewRepository.addNewReview(review);
-        Event event = new Event(Instant.now().toEpochMilli(), request.getUserId(), "REVIEW",
-                "ADD", review.getId());
+        Event event = new Event(Instant.now().toEpochMilli(), request.getUserId(), EventType.REVIEW,
+                OperationType.ADD, review.getId());
         eventRepository.save(event);
         return ReviewMapper.mapToReviewDto(review);
     }
@@ -50,8 +52,8 @@ public class ReviewService {
         Review review = reviewOp.get();
         ReviewMapper.updateReview(review, request);
         review = reviewRepository.updateReview(review);
-        Event event = new Event(Instant.now().toEpochMilli(), request.getUserId(), "REVIEW",
-                "UPDATE", review.getId());
+        Event event = new Event(Instant.now().toEpochMilli(), request.getUserId(), EventType.REVIEW,
+                OperationType.UPDATE, review.getId());
         eventRepository.save(event);
         return ReviewMapper.mapToReviewDto(review);
     }
@@ -63,8 +65,8 @@ public class ReviewService {
         if (!check) {
             throw new NotFoundException("Отзыв с id " + id + " не найден");
         } else {
-            Event event = new Event(Instant.now().toEpochMilli(), review.getUserId(), "REVIEW",
-                    "REMOVE", id);
+            Event event = new Event(Instant.now().toEpochMilli(), review.getUserId(), EventType.REVIEW,
+                    OperationType.REMOVE, id);
             eventRepository.save(event);
         }
     }

@@ -11,6 +11,9 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.model.enums.DirectorQueryParams;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.OperationType;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -121,7 +124,7 @@ public class FilmService {
         checkFilmAndUserExist(filmId, userId);
         likeRepository.addLike(filmId, userId);
         eventRepository.save(new Event(Instant.now().toEpochMilli(), userId,
-                "LIKE", "ADD", filmId));
+                EventType.LIKE, OperationType.ADD, filmId));
         log.info("Пользователь {} поставил лайк фильму {}", userId, filmId);
     }
 
@@ -129,7 +132,7 @@ public class FilmService {
         checkFilmAndUserExist(filmId, userId);
         likeRepository.removeLike(filmId, userId);
         eventRepository.save(new Event(Instant.now().toEpochMilli(), userId,
-                "LIKE", "REMOVE", filmId));
+                EventType.LIKE, OperationType.REMOVE, filmId));
         log.info("Пользователь {} удалил лайк у фильма {}", userId, filmId);
     }
 

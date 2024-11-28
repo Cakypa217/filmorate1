@@ -10,6 +10,8 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.OperationType;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -72,7 +74,7 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + friendId + " не найден"));
         friendsRepository.addFriend(userId, friendId);
         eventRepository.save(new Event(Instant.now().toEpochMilli(), userId,
-                "FRIEND", "ADD", friendId));
+                EventType.FRIEND, OperationType.ADD, friendId));
         log.info("Пользователь {} добавил в друзья пользователя {}", userId, friendId);
     }
 
@@ -83,7 +85,7 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException("Пользователь с id " + friendId + " не найден"));
         friendsRepository.deleteFriend(userId, friendId);
         eventRepository.save(new Event(Instant.now().toEpochMilli(), userId,
-                "FRIEND", "REMOVE", friendId));
+                EventType.FRIEND, OperationType.REMOVE, friendId));
         log.info("Пользователь {} удалил из друзей пользователя {}", userId, friendId);
     }
 
