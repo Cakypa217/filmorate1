@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.DirectorRepository;
 import ru.yandex.practicum.filmorate.dto.DirectorDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.DirectorMapper;
 
 import java.util.List;
@@ -31,6 +32,9 @@ public class DirectorService {
     }
 
     public DirectorDto create(DirectorDto newDirector) {
+        if (newDirector.getName() == null || newDirector.getName().isBlank()) {
+            throw new ValidationException("Имя режиссёра не должно быть пустым");
+        }
         return DirectorMapper.mapToDirectorDto(directorRepository.create(DirectorMapper.mapDtoToDirector(newDirector)));
     }
 
