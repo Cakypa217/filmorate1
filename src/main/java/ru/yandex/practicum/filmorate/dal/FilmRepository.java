@@ -28,9 +28,11 @@ public class FilmRepository extends BaseRepository<Film> {
             "JOIN mpa m ON f.mpa_id = m.mpa_id " +
             "WHERE f.film_id = ?";
     private static final String CREATE_FILM_GENRES = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
-    private static final String GET_POPULAR_FILMS = "SELECT f.*, m.mpa_id AS mpa_id, m.name AS mpa_name " +
-            "FROM films f " +
-            "JOIN mpa m ON f.mpa_id = m.mpa_id ";
+    private static final String GET_POPULAR_FILMS =
+            "SELECT f.*, m.mpa_id AS mpa_id, m.name AS mpa_name, COUNT(l.user_id) AS like_count " +
+                    "FROM films f " +
+                    "JOIN mpa m ON f.mpa_id = m.mpa_id " +
+                    "LEFT JOIN likes l ON f.film_id = l.film_id ";
     private static final String GET_COMMON_FILMS = "SELECT f.*, m.mpa_id AS mpa_id, m.name AS mpa_name" +
             " FROM likes AS l" +
             " JOIN films AS f ON l.film_id = f.film_id" +
@@ -129,47 +131,46 @@ public class FilmRepository extends BaseRepository<Film> {
     private void saveGenres(NewFilmRequest film) {
         final Long filmId = film.getId();
         jdbc.update("DELETE FROM film_genres WHERE film_id = ?", filmId);
-        final List<GenreDto> genres = film.getGenres();
-        if (genres == null || genres.isEmpty()) {
-            return;
-        }
-        final ArrayList<GenreDto> genreList = new ArrayList<>(genres);
+        final Set<GenreDto> uniqueGenres = new HashSet<>(film.getGenres());
         jdbc.batchUpdate(CREATE_FILM_GENRES, new BatchPreparedStatementSetter() {
+            private final Iterator<GenreDto> iterator = uniqueGenres.iterator();
+
             public void setValues(PreparedStatement ps, int i) throws SQLException {
-                ps.setLong(1, filmId);
-                ps.setLong(2, genreList.get(i).getId());
+                if (iterator.hasNext()) {
+                    GenreDto genre = iterator.next();
+                    ps.setLong(1, filmId);
+                    ps.setLong(2, genre.getId());
+                }
             }
 
             public int getBatchSize() {
-                return genreList.size();
+                return uniqueGenres.size();
             }
         });
     }
 
 
     public List<Film> getPopularFilms(Integer count, Optional<Long> genreId, Optional<Integer> year) {
-        StringBuilder queryBuilder = new StringBuilder("SELECT f.*, m.mpa_id AS mpa_id, m.name AS mpa_name " +
-                "FROM films f " +
-                "JOIN mpa m ON f.mpa_id = m.mpa_id");
-
-        List<Object> args = new ArrayList<>();
+        StringBuilder getPopularFilmsSB = new StringBuilder(GET_POPULAR_FILMS);
 
         if (genreId.isPresent()) {
-            queryBuilder.append(" JOIN film_genres AS fg ON f.film_id = fg.film_id AND fg.genre_id = ?");
-            args.add(genreId.get());
+            getPopularFilmsSB.append(" JOIN film_genres AS fg ON f.film_id = fg.film_id AND fg.genre_id = ?");
         }
-
         if (year.isPresent()) {
-            queryBuilder.append(genreId.isPresent() ? " AND" : " WHERE");
-            queryBuilder.append(" f.release_date >= ? AND f.release_date <= ?");
-            args.add(LocalDate.of(year.get(), 1, 1));
-            args.add(LocalDate.of(year.get(), 12, 31));
+            getPopularFilmsSB.append(" WHERE f.release_date >= ? AND f.release_date <= ?");
         }
+        getPopularFilmsSB.append(" GROUP BY f.film_id ");
+        getPopularFilmsSB.append(" ORDER BY like_count DESC, f.rate DESC LIMIT ?");
 
-        queryBuilder.append(" ORDER BY f.rate DESC LIMIT ?");
+        ArrayList<Object> args = new ArrayList<>();
+        genreId.ifPresent(args::add);
+        if (year.isPresent()) {
+            args.add(LocalDate.of(year.get(), 1, 1).toString());
+            args.add(LocalDate.of(year.get(), 12, 31).toString());
+        }
         args.add(count);
 
-        return jdbc.query(queryBuilder.toString(), mapper, args.toArray());
+        return jdbc.query(getPopularFilmsSB.toString(), mapper, args.toArray());
     }
 
     private void saveDirectors(NewFilmRequest film) {
@@ -230,7 +231,8 @@ public class FilmRepository extends BaseRepository<Film> {
                 return "WHERE LOWER(f.name) LIKE " + "LOWER('%" + query + "%') ";
             case "director":
                 return "WHERE LOWER(d.name) LIKE " + "LOWER('%" + query + "%') ";
-            default:return "WHERE LOWER(d.name) LIKE " + "LOWER('%" + query + "%') OR " +
+            default:
+                return "WHERE LOWER(d.name) LIKE " + "LOWER('%" + query + "%') OR " +
                         "LOWER(f.name) LIKE " + "LOWER('%" + query + "%') ";
         }
     }
