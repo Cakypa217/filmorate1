@@ -11,7 +11,8 @@ import java.util.Optional;
 @Repository
 public class ReviewRepository extends BaseRepository<Review> {
     private static final String BASE_QUERY = """
-            SELECT r.review_id, r.isPositive, r.content, r.film_id, r.user_id, SUM(u.useful_count) AS usefulness
+            SELECT r.review_id, r.isPositive, r.content, r.film_id, r.user_id,
+             COALESCE(SUM(u.useful_count), 0) AS usefulness
              FROM reviews r
              LEFT JOIN useful u ON u.review_id = r.review_id
             """;
