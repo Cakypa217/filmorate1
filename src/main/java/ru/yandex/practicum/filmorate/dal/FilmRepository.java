@@ -30,8 +30,7 @@ public class FilmRepository extends BaseRepository<Film> {
     private static final String CREATE_FILM_GENRES = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
     private static final String GET_POPULAR_FILMS = "SELECT f.*, m.mpa_id AS mpa_id, m.name AS mpa_name " +
             "FROM films f " +
-            "JOIN mpa m ON f.mpa_id = m.mpa_id " +
-            "ORDER BY f.rate DESC LIMIT ?";
+            "JOIN mpa m ON f.mpa_id = m.mpa_id ";
     private static final String GET_COMMON_FILMS = "SELECT f.*, m.mpa_id AS mpa_id, m.name AS mpa_name" +
             " FROM likes AS l" +
             " JOIN films AS f ON l.film_id = f.film_id" +
@@ -94,15 +93,18 @@ public class FilmRepository extends BaseRepository<Film> {
                 film.getMpa().getId()
         );
         film.setId(id);
-        Set<Genre> uniqueGenres = new HashSet<>(film.getGenres());
-
+        Set<Genre> uniqueGenres = film.getGenres() != null ?
+                new HashSet<>(film.getGenres()) :
+                new HashSet<>();
         for (Genre genre : uniqueGenres) {
             jdbc.update(CREATE_FILM_GENRES, id, genre.getId());
         }
 
-        Set<Director> uniqueDirectors = new HashSet<>(film.getDirectors());
+        Set<Director> uniqueDirectors = film.getDirectors() != null ?
+                new HashSet<>(film.getDirectors()) :
+                new HashSet<>();
         for (Director director : uniqueDirectors) {
-            jdbc.update(CREATE_FILM_DIRECTORS, id, director.getId());
+            jdbc.update(CREATE_FILM_DIRECTORS, director.getId(), id);
         }
 
         return film;
@@ -203,6 +205,30 @@ public class FilmRepository extends BaseRepository<Film> {
 
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         return jdbc.query(GET_COMMON_FILMS, mapper, userId, friendId);
+    }
+
+    public List<Film> searchFilmBy(String query, String by) {
+        String sql = "SELECT f.film_id, f.name, f.description, f.release_date, f.duration, " +
+                "f. mpa_id, m.NAME as mpa_name, " +
+                "COUNT (L.FILM_ID) AS rate FROM FILMS f " +
+                "INNER JOIN mpa M ON F.mpa_id = m.mpa_id " +
+                "LEFT JOIN likes l ON f.film_id = l.film_id " +
+                "LEFT JOIN DIRECTED_BY AS db ON f.film_id = db.film_id " +
+                "LEFT JOIN directors AS d ON db.director_id = d.DIRECTOR_ID " +
+                interpretQuery(query, by) +
+                "GROUP BY F.film_id ORDER BY rate DESC";
+        return jdbc.query(sql, mapper);
+    }
+
+    private String interpretQuery(String query, String by) {
+        switch (by) {
+            case "title":
+                return "WHERE LOWER(f.name) LIKE " + "LOWER('%" + query + "%') ";
+            case "director":
+                return "WHERE LOWER(d.name) LIKE " + "LOWER('%" + query + "%') ";
+            default:return "WHERE LOWER(d.name) LIKE " + "LOWER('%" + query + "%') OR " +
+                        "LOWER(f.name) LIKE " + "LOWER('%" + query + "%') ";
+        }
     }
 }
 

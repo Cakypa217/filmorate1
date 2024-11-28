@@ -115,6 +115,13 @@ public class FilmService {
         }
     }
 
+    public List<Film> searchFilmBy(String query, String by) {
+        List<Film> searchFilms = filmRepository.searchFilmBy(query, by);
+        genreRepository.load(searchFilms);
+        directorRepository.load(searchFilms);
+        return searchFilms;
+    }
+
     public void addLike(Long filmId, Long userId) {
         checkFilmAndUserExist(filmId, userId);
         likeRepository.addLike(filmId, userId);
