@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class UpdateReviewRequestDto {
+    private Long userId;
     private Long reviewId;
     private Boolean isPositive;
     private String content;

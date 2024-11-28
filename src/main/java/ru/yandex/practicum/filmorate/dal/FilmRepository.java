@@ -8,7 +8,7 @@ import ru.yandex.practicum.filmorate.dto.DirectorDto;
 import ru.yandex.practicum.filmorate.dto.GenreDto;
 import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
 import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.model.DirectorQueryParams;
+import ru.yandex.practicum.filmorate.model.enums.DirectorQueryParams;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
@@ -39,7 +39,6 @@ public class FilmRepository extends BaseRepository<Film> {
             " WHERE l.user_id = ?" +
             " AND l.film_id IN (SELECT fl.film_id FROM likes AS fl WHERE fl.user_id = ?)" +
             " ORDER BY f.rate DESC";
-
     private static final String CREATE_FILM = "INSERT INTO films (" +
             "name, description, release_date, duration, mpa_id)" +
             " VALUES (?, ?, ?, ?, ?)";
@@ -147,23 +146,28 @@ public class FilmRepository extends BaseRepository<Film> {
 
 
     public List<Film> getPopularFilms(Integer count, Optional<Long> genreId, Optional<Integer> year) {
-        String getPopularFilmsSB = GET_POPULAR_FILMS +
-                (genreId.isPresent() ?
-                        " JOIN film_genres AS fg ON f.film_id = fg.film_id AND fg.genre_id = ?" :
-                        "") +
-                (year.isPresent() ?
-                        " WHERE f.release_date >= ? AND f.release_date <= ? " :
-                        "") +
-                " ORDER BY f.rate DESC LIMIT ?";
+        StringBuilder queryBuilder = new StringBuilder("SELECT f.*, m.mpa_id AS mpa_id, m.name AS mpa_name " +
+                "FROM films f " +
+                "JOIN mpa m ON f.mpa_id = m.mpa_id");
 
-        ArrayList<Object> args = new ArrayList<Object>();
-        genreId.ifPresent(args::add);
-        if (year.isPresent()) {
-            args.add(LocalDate.of(year.get(), 1, 1).toString());
-            args.add(LocalDate.of(year.get(), 12, 31).toString());
+        List<Object> args = new ArrayList<>();
+
+        if (genreId.isPresent()) {
+            queryBuilder.append(" JOIN film_genres AS fg ON f.film_id = fg.film_id AND fg.genre_id = ?");
+            args.add(genreId.get());
         }
+
+        if (year.isPresent()) {
+            queryBuilder.append(genreId.isPresent() ? " AND" : " WHERE");
+            queryBuilder.append(" f.release_date >= ? AND f.release_date <= ?");
+            args.add(LocalDate.of(year.get(), 1, 1));
+            args.add(LocalDate.of(year.get(), 12, 31));
+        }
+
+        queryBuilder.append(" ORDER BY f.rate DESC LIMIT ?");
         args.add(count);
-        return jdbc.query(getPopularFilmsSB, mapper, args.toArray());
+
+        return jdbc.query(queryBuilder.toString(), mapper, args.toArray());
     }
 
     private void saveDirectors(NewFilmRequest film) {
