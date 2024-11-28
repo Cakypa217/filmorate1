@@ -103,4 +103,12 @@ public class FilmController {
         log.info("Отправлен ответ GET /films/director с количеством фильмов: {}", directorsFilms.size());
         return directorsFilms;
     }
+
+    @GetMapping("/search")
+    public List<Film> getSearchFilmsBy(
+            @RequestParam String query,
+            @RequestParam String by) {
+        log.info("Получен запрос GET /films/search?query={}&by={}", query, by);
+        return filmService.searchFilmBy(query, by);
+    }
 }
