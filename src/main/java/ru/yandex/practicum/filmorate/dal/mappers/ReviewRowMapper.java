@@ -17,7 +17,7 @@ public class ReviewRowMapper implements RowMapper<Review> {
         review.setContent(rs.getString("content"));
         review.setFilmId(rs.getLong("film_id"));
         review.setUserId(rs.getLong("user_id"));
-        review.setCount(rs.getInt("useful"));
+        review.setCount(rs.getInt("usefulness"));
         return review;
     }
 }
