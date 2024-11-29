@@ -28,11 +28,11 @@ public class FilmRepository extends BaseRepository<Film> {
             "JOIN mpa m ON f.mpa_id = m.mpa_id " +
             "WHERE f.film_id = ?";
     private static final String CREATE_FILM_GENRES = "INSERT INTO film_genres (film_id, genre_id) VALUES (?, ?)";
-    private static final String GET_POPULAR_FILMS =
-            "SELECT f.*, m.mpa_id AS mpa_id, m.name AS mpa_name, COUNT(l.user_id) AS like_count " +
-                    "FROM films f " +
-                    "JOIN mpa m ON f.mpa_id = m.mpa_id " +
-                    "LEFT JOIN likes l ON f.film_id = l.film_id ";
+    private static final String GET_POPULAR_FILMS = "SELECT f.*, m.mpa_id AS mpa_id, m.name AS mpa_name, " +
+            "COUNT(l.film_id) AS cnt " +
+            "FROM films AS f " +
+            "JOIN mpa m ON f.mpa_id = m.mpa_id " +
+            "LEFT JOIN likes AS l ON f.film_id = l.film_id ";
     private static final String GET_COMMON_FILMS = "SELECT f.*, m.mpa_id AS mpa_id, m.name AS mpa_name" +
             " FROM likes AS l" +
             " JOIN films AS f ON l.film_id = f.film_id" +
@@ -151,26 +151,24 @@ public class FilmRepository extends BaseRepository<Film> {
 
 
     public List<Film> getPopularFilms(Integer count, Optional<Long> genreId, Optional<Integer> year) {
-        StringBuilder getPopularFilmsSB = new StringBuilder(GET_POPULAR_FILMS);
+        String getPopularFilmsSB = GET_POPULAR_FILMS +
+                        (genreId.isPresent() ?
+                                " JOIN film_genres AS fg ON f.film_id = fg.film_id AND fg.genre_id = ?" :
+                                "") +
+                        (year.isPresent() ?
+                                " WHERE f.release_date >= ? AND f.release_date <= ? " :
+                                "") +
+                        "GROUP BY f.film_id " +
+                        "ORDER BY COUNT(l.film_id) DESC LIMIT ?";
 
-        if (genreId.isPresent()) {
-            getPopularFilmsSB.append(" JOIN film_genres AS fg ON f.film_id = fg.film_id AND fg.genre_id = ?");
-        }
-        if (year.isPresent()) {
-            getPopularFilmsSB.append(" WHERE f.release_date >= ? AND f.release_date <= ?");
-        }
-        getPopularFilmsSB.append(" GROUP BY f.film_id ");
-        getPopularFilmsSB.append(" ORDER BY like_count DESC, f.rate DESC LIMIT ?");
-
-        ArrayList<Object> args = new ArrayList<>();
+        ArrayList<Object> args = new ArrayList<Object>();
         genreId.ifPresent(args::add);
         if (year.isPresent()) {
             args.add(LocalDate.of(year.get(), 1, 1).toString());
             args.add(LocalDate.of(year.get(), 12, 31).toString());
         }
         args.add(count);
-
-        return jdbc.query(getPopularFilmsSB.toString(), mapper, args.toArray());
+        return jdbc.query(getPopularFilmsSB, mapper, args.toArray());
     }
 
     private void saveDirectors(NewFilmRequest film) {

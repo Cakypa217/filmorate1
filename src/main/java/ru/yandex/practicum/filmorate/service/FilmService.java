@@ -153,6 +153,9 @@ public class FilmService {
 
     public void addLike(Long filmId, Long userId) {
         checkFilmAndUserExist(filmId, userId);
+        if (likeRepository.isLikeExist(filmId, userId)) {
+            return;
+        }
         likeRepository.addLike(filmId, userId);
         eventRepository.save(new Event(Instant.now().toEpochMilli(), userId,
                 EventType.LIKE, OperationType.ADD, filmId));

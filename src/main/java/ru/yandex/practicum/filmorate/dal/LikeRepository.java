@@ -23,8 +23,13 @@ public class LikeRepository {
                 "GROUP BY l4.user_id) subquery " +
             "WHERE common_count = max_common) AND l.film_id NOT IN " +
             "(SELECT l2.film_id FROM likes l2 WHERE l2.user_id = ?)";
+    private static final String IS_LIKE_EXISTS = "SELECT count(*) FROM likes WHERE film_id = ? AND user_id = ?";
 
     private final JdbcTemplate jdbcTemplate;
+
+    public boolean isLikeExist(long filmId, long userId) {
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(IS_LIKE_EXISTS, Boolean.class, filmId, userId));
+    }
 
     public void addLike(long filmId, long userId) {
         if (!hasLike(filmId, userId)) {
