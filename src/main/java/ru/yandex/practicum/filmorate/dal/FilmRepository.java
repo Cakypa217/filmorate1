@@ -131,19 +131,20 @@ public class FilmRepository extends BaseRepository<Film> {
     private void saveGenres(NewFilmRequest film) {
         final Long filmId = film.getId();
         jdbc.update("DELETE FROM film_genres WHERE film_id = ?", filmId);
-        final List<GenreDto> genres = film.getGenres();
-        if (genres == null || genres.isEmpty()) {
-            return;
-        }
-        final ArrayList<GenreDto> genreList = new ArrayList<>(genres);
+        final Set<GenreDto> uniqueGenres = new HashSet<>(film.getGenres());
         jdbc.batchUpdate(CREATE_FILM_GENRES, new BatchPreparedStatementSetter() {
+            private final Iterator<GenreDto> iterator = uniqueGenres.iterator();
+
             public void setValues(PreparedStatement ps, int i) throws SQLException {
-                ps.setLong(1, filmId);
-                ps.setLong(2, genreList.get(i).getId());
+                if (iterator.hasNext()) {
+                    GenreDto genre = iterator.next();
+                    ps.setLong(1, filmId);
+                    ps.setLong(2, genre.getId());
+                }
             }
 
             public int getBatchSize() {
-                return genreList.size();
+                return uniqueGenres.size();
             }
         });
     }
@@ -151,14 +152,14 @@ public class FilmRepository extends BaseRepository<Film> {
 
     public List<Film> getPopularFilms(Integer count, Optional<Long> genreId, Optional<Integer> year) {
         String getPopularFilmsSB = GET_POPULAR_FILMS +
-                (genreId.isPresent() ?
-                        " JOIN film_genres AS fg ON f.film_id = fg.film_id AND fg.genre_id = ?" :
-                        "") +
-                (year.isPresent() ?
-                        " WHERE f.release_date >= ? AND f.release_date <= ? " :
-                        "") +
-                "GROUP BY f.film_id " +
-                "ORDER BY COUNT(l.film_id) DESC LIMIT ?";
+                        (genreId.isPresent() ?
+                                " JOIN film_genres AS fg ON f.film_id = fg.film_id AND fg.genre_id = ?" :
+                                "") +
+                        (year.isPresent() ?
+                                " WHERE f.release_date >= ? AND f.release_date <= ? " :
+                                "") +
+                        "GROUP BY f.film_id " +
+                        "ORDER BY COUNT(l.film_id) DESC LIMIT ?";
 
         ArrayList<Object> args = new ArrayList<Object>();
         genreId.ifPresent(args::add);
@@ -228,7 +229,8 @@ public class FilmRepository extends BaseRepository<Film> {
                 return "WHERE LOWER(f.name) LIKE " + "LOWER('%" + query + "%') ";
             case "director":
                 return "WHERE LOWER(d.name) LIKE " + "LOWER('%" + query + "%') ";
-            default:return "WHERE LOWER(d.name) LIKE " + "LOWER('%" + query + "%') OR " +
+            default:
+                return "WHERE LOWER(d.name) LIKE " + "LOWER('%" + query + "%') OR " +
                         "LOWER(f.name) LIKE " + "LOWER('%" + query + "%') ";
         }
     }

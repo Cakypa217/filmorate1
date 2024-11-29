@@ -95,19 +95,31 @@ public class ReviewService {
     }
 
     public ReviewResponseDto addLike(Long id, Long userId) {
+        checkReviewId(id);
+        checkUserId(userId);
         usefulRepository.deleteUseful(id, userId);
         usefulRepository.addLikeToReview(id, userId);
+        eventRepository.save(
+                new Event(Instant.now().toEpochMilli(), userId, EventType.REVIEW, OperationType.ADD, id));
         return getReviewById(id);
     }
 
     public ReviewResponseDto addDislike(Long id, Long userId) {
+        checkReviewId(id);
+        checkUserId(userId);
         usefulRepository.deleteUseful(id, userId);
         usefulRepository.addDislikeToReview(id, userId);
+        eventRepository.save(
+                new Event(Instant.now().toEpochMilli(), userId, EventType.REVIEW, OperationType.ADD, id));
         return getReviewById(id);
     }
 
     public ReviewResponseDto deleteUseful(Long id, Long userId) {
+        checkReviewId(id);
+        checkUserId(userId);
         usefulRepository.deleteUseful(id, userId);
+        eventRepository.save(
+                new Event(Instant.now().toEpochMilli(), userId, EventType.REVIEW, OperationType.REMOVE, id));
         return getReviewById(id);
     }
 
