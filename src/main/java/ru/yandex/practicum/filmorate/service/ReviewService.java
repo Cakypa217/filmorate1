@@ -52,7 +52,7 @@ public class ReviewService {
         Review review = reviewOp.get();
         ReviewMapper.updateReview(review, request);
         review = reviewRepository.updateReview(review);
-        Event event = new Event(Instant.now().toEpochMilli(), request.getUserId(), EventType.REVIEW,
+        Event event = new Event(Instant.now().toEpochMilli(), review.getUserId(), EventType.REVIEW,
                 OperationType.UPDATE, review.getId());
         eventRepository.save(event);
         return ReviewMapper.mapToReviewDto(review);
@@ -99,8 +99,6 @@ public class ReviewService {
         checkUserId(userId);
         usefulRepository.deleteUseful(id, userId);
         usefulRepository.addLikeToReview(id, userId);
-        eventRepository.save(
-                new Event(Instant.now().toEpochMilli(), userId, EventType.REVIEW, OperationType.ADD, id));
         return getReviewById(id);
     }
 
@@ -109,8 +107,6 @@ public class ReviewService {
         checkUserId(userId);
         usefulRepository.deleteUseful(id, userId);
         usefulRepository.addDislikeToReview(id, userId);
-        eventRepository.save(
-                new Event(Instant.now().toEpochMilli(), userId, EventType.REVIEW, OperationType.ADD, id));
         return getReviewById(id);
     }
 
@@ -118,8 +114,6 @@ public class ReviewService {
         checkReviewId(id);
         checkUserId(userId);
         usefulRepository.deleteUseful(id, userId);
-        eventRepository.save(
-                new Event(Instant.now().toEpochMilli(), userId, EventType.REVIEW, OperationType.REMOVE, id));
         return getReviewById(id);
     }
 
