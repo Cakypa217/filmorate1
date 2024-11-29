@@ -90,11 +90,8 @@ public class FilmService {
     public NewFilmRequest update(NewFilmRequest newFilmRequest) {
         Film film = filmRepository.findById(newFilmRequest.getId())
                 .orElseThrow(() -> new NotFoundException("Фильм не найден"));
-
-        // Обновление основных полей фильма
         film.setRate(newFilmRequest.getRate());
 
-        // Преобразование списков жанров и режиссеров в множества для уникальности
         Set<Genre> uniqueGenres = newFilmRequest.getGenres() != null ?
                 newFilmRequest.getGenres().stream()
                         .map(genreDto -> genreRepository.getGenreById(genreDto.getId())
@@ -111,7 +108,6 @@ public class FilmService {
                 Collections.emptySet();
         film.setDirectors(new ArrayList<>(uniqueDirectors));
 
-        // Обновление фильма в репозитории
         filmRepository.update(newFilmRequest);
         log.info("Отправлен ответ : {}", newFilmRequest);
         return newFilmRequest;
