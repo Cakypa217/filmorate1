@@ -64,6 +64,7 @@ public class FilmService {
     public List<Film> getAllFilms() {
         final List<Film> films = filmRepository.findAll();
         genreRepository.load(films);
+        directorRepository.load(films);
         log.info("Найдены фильмы: {}", films);
         return films;
     }
@@ -72,6 +73,7 @@ public class FilmService {
         Film film = filmRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Фильм не найден"));
         genreRepository.load(Collections.singletonList(film));
+        directorRepository.load(Collections.singletonList(film));
         log.info("Отправлен ответ с FilmMapper.mapToFilmDto(film): {}", FilmMapper.mapToFilmDto(film));
         return FilmMapper.mapToFilmDto(film);
     }
@@ -82,6 +84,7 @@ public class FilmService {
         }
         final List<Film> films = filmRepository.findByIds(ids);
         genreRepository.load(films);
+        directorRepository.load(films);
         log.info("Найдены фильмы по заданному списку id: {}", films);
         return films;
     }
@@ -98,6 +101,7 @@ public class FilmService {
     public List<Film> getPopularFilms(Integer count, Optional<Long> genreId, Optional<Integer> year) {
         List<Film> popularFilms = filmRepository.getPopularFilms(count, genreId, year);
         genreRepository.load(popularFilms);
+        directorRepository.load(popularFilms);
         log.info("Получен список популярных фильмов. Количество: {}", popularFilms.size());
         return popularFilms;
     }
@@ -105,6 +109,7 @@ public class FilmService {
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         List<Film> commonFilms = filmRepository.getCommonFilms(userId, friendId);
         genreRepository.load(commonFilms);
+        directorRepository.load(commonFilms);
         log.info("Получен список общих фильмов. Количество: {}", commonFilms.size());
         return commonFilms;
     }
@@ -112,6 +117,10 @@ public class FilmService {
     public List<Film> getDirectorsFilms(Long directorId, String sortBy) {
         try {
             List<Film> directorsFilms = filmRepository.getDirectorsFilms(directorId, DirectorQueryParams.valueOf(sortBy));
+            if (directorsFilms.isEmpty()) {
+                throw new NotFoundException("Фильмы по режиссёру не найдены");
+            }
+            genreRepository.load(directorsFilms);
             directorRepository.load(directorsFilms);
             log.info("Получен список фильмов режиссера {}", directorId);
             return directorsFilms;
@@ -129,6 +138,9 @@ public class FilmService {
 
     public void addLike(Long filmId, Long userId) {
         checkFilmAndUserExist(filmId, userId);
+        if (likeRepository.isLikeExist(filmId, userId)) {
+            return;
+        }
         likeRepository.addLike(filmId, userId);
         eventRepository.save(new Event(Instant.now().toEpochMilli(), userId,
                 EventType.LIKE, OperationType.ADD, filmId));
