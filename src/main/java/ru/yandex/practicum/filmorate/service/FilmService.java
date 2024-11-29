@@ -4,12 +4,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.*;
+import ru.yandex.practicum.filmorate.dto.DirectorDto;
+import ru.yandex.practicum.filmorate.dto.GenreDto;
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
 import ru.yandex.practicum.filmorate.exception.MpaNotFoundException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.mapper.DirectorMapper;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
+import ru.yandex.practicum.filmorate.mapper.GenreMapper;
 import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.model.enums.DirectorQueryParams;
 import ru.yandex.practicum.filmorate.model.enums.EventType;
@@ -92,21 +96,23 @@ public class FilmService {
                 .orElseThrow(() -> new NotFoundException("Фильм не найден"));
         film.setRate(newFilmRequest.getRate());
 
-        Set<Genre> uniqueGenres = newFilmRequest.getGenres() != null ?
+        Set<GenreDto> uniqueGenres = newFilmRequest.getGenres() != null ?
                 newFilmRequest.getGenres().stream()
                         .map(genreDto -> genreRepository.getGenreById(genreDto.getId())
                                 .orElseThrow(() -> new MpaNotFoundException("Жанр с id " + genreDto.getId() + " не найден")))
+                        .map(GenreMapper::toGenreDto)
                         .collect(Collectors.toSet()) :
                 Collections.emptySet();
-        film.setGenres(new ArrayList<>(uniqueGenres));
+        newFilmRequest.setGenres(new ArrayList<>(uniqueGenres));
 
-        Set<Director> uniqueDirectors = newFilmRequest.getDirectors() != null ?
+        Set<DirectorDto> uniqueDirectors = newFilmRequest.getDirectors() != null ?
                 newFilmRequest.getDirectors().stream()
                         .map(directorDto -> directorRepository.getById(directorDto.getId())
                                 .orElseThrow(() -> new NotFoundException("Режиссер с id " + directorDto.getId() + " не найден")))
+                        .map(DirectorMapper::mapToDirectorDto)
                         .collect(Collectors.toSet()) :
                 Collections.emptySet();
-        film.setDirectors(new ArrayList<>(uniqueDirectors));
+        newFilmRequest.setDirectors(new ArrayList<>(uniqueDirectors));
 
         filmRepository.update(newFilmRequest);
         log.info("Отправлен ответ : {}", newFilmRequest);
@@ -153,9 +159,6 @@ public class FilmService {
 
     public void addLike(Long filmId, Long userId) {
         checkFilmAndUserExist(filmId, userId);
-        if (likeRepository.isLikeExist(filmId, userId)) {
-            return;
-        }
         likeRepository.addLike(filmId, userId);
         eventRepository.save(new Event(Instant.now().toEpochMilli(), userId,
                 EventType.LIKE, OperationType.ADD, filmId));
