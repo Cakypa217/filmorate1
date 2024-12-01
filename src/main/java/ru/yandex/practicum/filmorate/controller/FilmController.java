@@ -27,7 +27,7 @@ public class FilmController {
     public List<Film> getAllFilms() {
         log.info("Получен запрос GET /films");
         List<Film> films = filmService.getAllFilms();
-        log.info("Отправлен ответ GET /films с количеством фильмов: {}", films.size());
+        log.info("Отправлен ответ GET /films. Всего {} фильмов: {}", films.size(), films);
         return films;
     }
 
@@ -82,7 +82,8 @@ public class FilmController {
                                       @RequestParam(name = "year", required = false) Optional<Integer> year) {
         log.info("Получен запрос GET /films/popular?count={}", count);
         List<Film> popularFilms = filmService.getPopularFilms(count, genreId, year);
-        log.info("Отправлен ответ GET /films/popular с количеством фильмов: {}", popularFilms.size());
+        log.info("Отправлен ответ GET /films/popular. Всего {} фильмов: {}", popularFilms.size(),
+                popularFilms);
         return popularFilms;
     }
 
@@ -91,7 +92,8 @@ public class FilmController {
                                      @RequestParam(name = "friendId") Long friendId) {
         log.info("Получен запрос GET /films/common?userId={}&friendId={}", userId, friendId);
         List<Film> commonFilms = filmService.getCommonFilms(userId, friendId);
-        log.info("Отправлен ответ GET /films/common с количеством фильмов: {}", commonFilms.size());
+        log.info("Отправлен ответ GET /films/common. Всего {} фильмов: {}", commonFilms.size(),
+                commonFilms);
         return commonFilms;
     }
   
@@ -100,7 +102,8 @@ public class FilmController {
                                         @RequestParam(name = "sortBy") String sortBy) {
         log.info("Получен запрос GET /films/director/{}?sortBy=[{}]", directorId, sortBy);
         List<Film> directorsFilms = filmService.getDirectorsFilms(directorId, sortBy);
-        log.info("Отправлен ответ GET /films/director с количеством фильмов: {}", directorsFilms.size());
+        log.info("Отправлен ответ GET /films/director. Всего {} фильмов: {}", directorsFilms.size(),
+                directorsFilms);
         return directorsFilms;
     }
 
@@ -109,6 +112,9 @@ public class FilmController {
             @RequestParam String query,
             @RequestParam String by) {
         log.info("Получен запрос GET /films/search?query={}&by={}", query, by);
-        return filmService.searchFilmBy(query, by);
+        final List<Film> searchResult = filmService.searchFilmBy(query, by);
+        log.info("Отправлен ответ GET /films/search?query={}&by={}. Всего {} фильмов: {}",
+                query, by, searchResult.size(), searchResult);
+        return searchResult;
     }
 }

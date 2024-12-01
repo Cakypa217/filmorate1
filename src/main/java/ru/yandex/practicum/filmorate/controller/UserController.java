@@ -24,7 +24,7 @@ public class UserController {
     public List<User> getAllUsers() {
         log.info("Получен запрос GET /users");
         List<User> users = userService.getAllUsers();
-        log.info("Отправлен ответ GET /users с количеством пользователей: {}", users.size());
+        log.info("Отправлен ответ GET /users. Всего {} пользователей : {}", users.size(), users);
         return users;
     }
 
@@ -77,7 +77,8 @@ public class UserController {
     public List<User> getFriends(@PathVariable Long id) {
         log.info("Получен запрос GET /users/{}/friends", id);
         List<User> friends = userService.getFriends(id);
-        log.info("Отправлен ответ GET /users/{}/friends с количеством друзей: {}", id, friends.size());
+        log.info("Отправлен ответ GET /users/{}/friends. Всего {} друзей: {}", id, friends.size(),
+                friends);
         return friends;
     }
 
@@ -85,7 +86,8 @@ public class UserController {
     public List<User> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
         log.info("Получен запрос GET /users/{}/friends/common/{}", id, otherId);
         List<User> commonFriends = userService.getCommonFriends(id, otherId);
-        log.info("Отправлен ответ GET /users/{}/friends/common/{} с количеством общих друзей: {}", id, otherId, commonFriends.size());
+        log.info("Отправлен ответ GET /users/{}/friends/common/{}. Всего {} общих друзей: {}", id,
+                otherId, commonFriends.size(), commonFriends);
         return commonFriends;
     }
 
@@ -93,14 +95,15 @@ public class UserController {
     public List<Event> getUserFeed(@PathVariable Long id) {
         log.info("Получен запрос GET /users/{}/feed", id);
         List<Event> events = userService.getUserEvents(id);
-        log.info("Отправлен ответ GET /users/{}/feed с количеством событий: {}", id, events.size());
+        log.info("Отправлен ответ GET /users/{}/feed. Всего {} событий: {}", id, events.size(), events);
         return events;
     }
     @GetMapping("/{id}/recommendations")
     public List<Film> getRecommendations(@PathVariable Long id) {
         log.info("Получен запрос GET /users/{}/recommendations", id);
         final List<Film> recommendedFilms = filmService.getRecommendations(id);
-        log.info("Отправлен ответ GET /users/{}/recommendations с количеством фильмов: {}", id, recommendedFilms.size());
+        log.info("Отправлен ответ GET /users/{}/recommendations. Всего {} рекомендаций: {}",
+                id, recommendedFilms.size(), recommendedFilms);
         return recommendedFilms;
     }
 }
