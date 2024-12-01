@@ -26,7 +26,7 @@ public class MpaController {
     public List<MpaDto> getAllMpa() {
         log.info("Получен запрос GET /mpa");
         List<MpaDto> mpaList = mpaService.getAllMpa();
-        log.info("Отправлен ответ GET /mpa с количеством рейтингов MPA: {}", mpaList.size());
+        log.info("Отправлен ответ GET /mpa. Всего {} рейтингов MPA: {}", mpaList.size(), mpaList);
         return mpaList;
     }
 

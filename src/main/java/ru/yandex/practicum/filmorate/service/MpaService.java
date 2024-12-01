@@ -28,7 +28,8 @@ public class MpaService {
 
     public MpaDto getMpaById(Long id) {
         Mpa mpa = mpaRepository.getMpaById(id, () -> new NotFoundException("MPA с id " + id + " не найден"));
-        log.info("Отправлен ответ MpaMapper.mapToMpaDto(mpa): {}", MpaMapper.mapToMpaDto(mpa));
-        return MpaMapper.mapToMpaDto(mpa);
+        MpaDto mpaDto = MpaMapper.mapToMpaDto(mpa);
+        log.info("Отправлен ответ MpaMapper.mapToMpaDto(mpa): {}", mpaDto);
+        return mpaDto;
     }
 }
