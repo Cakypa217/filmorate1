@@ -29,7 +29,8 @@ public class GenreService {
     public GenreDto getGenreById(Long id) {
         Genre genre = genreRepository.getGenreById(id)
                 .orElseThrow(() -> new NotFoundException("Жанр с id " + id + " не найден"));
-        log.info("ОТправлен ответ: {}", GenreMapper.toGenreDto(genre));
-        return GenreMapper.toGenreDto(genre);
+        GenreDto genreDto = GenreMapper.toGenreDto(genre);
+        log.info("ОТправлен ответ: {}", genreDto);
+        return genreDto;
     }
 }
