@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.reviews.NewReviewRequestDto;
@@ -13,62 +14,84 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping({"/reviews"})
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class ReviewController {
-    ReviewService reviewService;
+    private final ReviewService reviewService;
 
     @PostMapping
     public ReviewResponseDto addNewReview(@RequestBody NewReviewRequestDto request) {
-        log.info("пришел запрос на создание нового отзыва");
-        return reviewService.addNewReview(request);
+        log.info("Получен запрос POST /reviews с телом: {}", request);
+        final ReviewResponseDto review = reviewService.addNewReview(request);
+        log.info("Отправлен ответ POST /reviews с телом: {}", review);
+        return review;
     }
 
     @PutMapping
     public ReviewResponseDto updateReview(@RequestBody UpdateReviewRequestDto request) {
-        log.info("пришел запрос на изменение отзыва с id " + request.getReviewId());
-        return reviewService.updateReview(request);
+        log.info("Получен запрос PUT /reviews с телом: {}", request);
+        final ReviewResponseDto review = reviewService.updateReview(request);
+        log.info("Отправлен ответ PUT /reviews с телом: {}", review);
+        return review;
     }
 
     @DeleteMapping({"/{id}"})
     public void deleteReview(@PathVariable("id") Long id) {
-        log.info("пришел запрос на удаление отзыва с id " + id);
+        log.info("Получен запрос DELETE /reviews/{}", id);
         reviewService.deleteReview(id);
+        log.info("Отзыв {} удалён", id);
     }
 
     @GetMapping
     public List<ReviewResponseDto> getReviews(@RequestParam(defaultValue = "0") Long filmId,
                                               @RequestParam(defaultValue = "10") int count) {
-        log.info("пришел запрос на получение отзывов для фильма с id " + filmId + " в количестве " + count);
-        return reviewService.getReviews(filmId, count);
+        log.info("Получен запрос GET /reviews для фильма с id {} в количестве {}", filmId, count);
+        final List<ReviewResponseDto> reviews = reviewService.getReviews(filmId, count);
+        log.info("Отправлен ответ GET /reviews для фильма с id {}. Всего {} отзывов: {}", filmId,
+                reviews.size(), reviews);
+        return reviews;
     }
 
     @GetMapping({"/{id}"})
     public ReviewResponseDto getReviewById(@PathVariable("id") Long id) {
-        log.info("пришел запрос на получение отзыва с id " + id);
-        return reviewService.getReviewById(id);
+        log.info("Получен запрос GET /reviews/{}", id);
+        final ReviewResponseDto reviewResponseDto = reviewService.getReviewById(id);
+        log.info("Отправлен ответ GET /reviews/{} с телом {}", id, reviewResponseDto);
+        return reviewResponseDto;
     }
 
     @PutMapping({"/{id}/like/{userId}"})
     public ReviewResponseDto addLike(@PathVariable("id") Long id, @PathVariable("userId") Long userId) {
-        log.info("пришел запрос на добавление лайка к отзыву с id " + id + " от пользователя с id" + userId);
-        return reviewService.addLike(id, userId);
+        log.info("Получен запрос PUT /reviews/{}/like/{}", id, userId);
+        final ReviewResponseDto reviewResponseDto = reviewService.addLike(id, userId);
+        log.info("Добавлен лайк отзыву {} от пользователя {}. Отправлен ответ: {}", id, userId,
+                reviewResponseDto);
+        return reviewResponseDto;
     }
 
     @PutMapping({"/{id}/dislike/{userId}"})
     public ReviewResponseDto addDislike(@PathVariable("id") Long id, @PathVariable("userId") Long userId) {
-        log.info("пришел запрос на добавление дизлайка к отзыву с id " + id + " от пользователя с id" + userId);
-        return reviewService.addDislike(id, userId);
+        log.info("Получен запрос PUT /reviews/{}/dislike/{}", id, userId);
+        final ReviewResponseDto reviewResponseDto = reviewService.addDislike(id, userId);
+        log.info("Добавлен дизлайк отзыву {} от пользователя {}. Отправлен ответ: {}", id, userId,
+                reviewResponseDto);
+        return reviewResponseDto;
     }
 
     @DeleteMapping({"/{id}/like/{userId}"})
     public ReviewResponseDto deleteLike(@PathVariable("id") Long id, @PathVariable("userId") Long userId) {
-        log.info("пришел запрос на удаление лайка к отзыву с id " + id + " от пользователя с id" + userId);
-        return reviewService.deleteUseful(id, userId);
+        log.info("Получен запрос DELETE /reviews/{}/like/{}", id, userId);
+        final ReviewResponseDto reviewResponseDto = reviewService.deleteUseful(id, userId);
+        log.info("Удалён лайк отзыву {} от пользователя {}. Отправлен ответ: {}", id, userId,
+                reviewResponseDto);
+        return reviewResponseDto;
     }
 
     @DeleteMapping({"/{id}/dislike/{userId}"})
     public ReviewResponseDto deleteDislike(@PathVariable("id") Long id, @PathVariable("userId") Long userId) {
-        log.info("пришел запрос на удаление дизлайка к отзыву с id " + id + " от пользователя с id" + userId);
-        return reviewService.deleteUseful(id, userId);
+        log.info("Получен запрос DELETE /reviews/{}/dislike/{}", id, userId);
+        final ReviewResponseDto reviewResponseDto = reviewService.deleteUseful(id, userId);
+        log.info("Удалён дизлайк отзыву {} от пользователя {}. Отправлен ответ: {}", id, userId,
+                reviewResponseDto);
+        return reviewResponseDto;
     }
 }
