@@ -51,8 +51,9 @@ public class FilmService {
         Film film = FilmMapper.mapToFilm(newFilmRequest, mpa, genres, directors);
         validateFilm(film);
         filmRepository.create(film);
-        log.info("Отправлен ответ с FilmMapper.mapToFilmDto(film): {}", FilmMapper.mapToFilmDto(film));
-        return FilmMapper.mapToFilmDto(film);
+        FilmDto filmDto = FilmMapper.mapToFilmDto(film);
+        log.info("Отправлен ответ с FilmMapper.mapToFilmDto(film): {}", filmDto);
+        return filmDto;
     }
 
     public void deleteFilm(Long id) {
@@ -76,8 +77,9 @@ public class FilmService {
                 .orElseThrow(() -> new NotFoundException("Фильм не найден"));
         genreRepository.load(Collections.singletonList(film));
         directorRepository.load(Collections.singletonList(film));
-        log.info("Отправлен ответ с FilmMapper.mapToFilmDto(film): {}", FilmMapper.mapToFilmDto(film));
-        return FilmMapper.mapToFilmDto(film);
+        FilmDto filmDto = FilmMapper.mapToFilmDto(film);
+        log.info("Отправлен ответ с FilmMapper.mapToFilmDto(film): {}", filmDto);
+        return filmDto;
     }
 
     public List<Film> getFilmsByIds(List<Long> ids) {
@@ -120,7 +122,16 @@ public class FilmService {
     }
 
     public List<Film> getPopularFilms(Integer count, Optional<Long> genreId, Optional<Integer> year) {
-        List<Film> popularFilms = filmRepository.getPopularFilms(count, genreId, year);
+        List<Film> popularFilms;
+        if (genreId.isPresent() && year.isPresent()) {
+            popularFilms = filmRepository.getPopularFilmsByGenreAndYear(count, genreId.get(), year.get());
+        } else if (genreId.isPresent()) {
+            popularFilms = filmRepository.getPopularFilmsByGenre(count, genreId.get());
+        } else if (year.isPresent()) {
+            popularFilms = filmRepository.getPopularFilmsByYear(count, year.get());
+        } else {
+            popularFilms = filmRepository.getPopularFilms(count);
+        }
         genreRepository.load(popularFilms);
         directorRepository.load(popularFilms);
         log.info("Получен список популярных фильмов. Количество: {}", popularFilms.size());
